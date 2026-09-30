@@ -50,6 +50,7 @@ services:
 
   api:
     image: ${API_IMAGE}
+    command: ["sh", "-c", "mkdir -p /app/data/assets && exec uvicorn backend.main:app --host 0.0.0.0 --port 11001 --proxy-headers"]
     build:
       context: ..
       dockerfile: deploy/api.Dockerfile
@@ -157,7 +158,7 @@ services:
       minio:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "celery -A backend.control_plane.celery_runtime.celery_app inspect ping -d videolingo-worker@$$HOSTNAME --timeout=3 | grep -q pong"]
+      test: ["CMD-SHELL", "celery -A backend.control_plane.celery_runtime.celery_app inspect ping -d yunzhiai-worker@$$HOSTNAME --timeout=3 | grep -q pong"]
       interval: 15s
       timeout: 8s
       retries: 6
