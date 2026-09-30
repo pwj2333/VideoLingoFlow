@@ -34,7 +34,7 @@
    ```
 5. 启动控制平面依赖：`docker compose -f deploy/docker-compose.yml --env-file .env up -d postgres redis minio`。
 6. 执行版本化迁移：`docker compose -f deploy/docker-compose.yml --env-file .env run --rm --no-deps api alembic upgrade head`。
-7. 启动 API、worker 和反向代理：`docker compose -f deploy/docker-compose.yml --env-file .env up -d api worker proxy`。
+7. 启动 API、控制平面 worker、VoiceForge worker 和反向代理：`docker compose -f deploy/docker-compose.yml --env-file .env up -d api worker voiceforge-worker proxy`。
 8. 通过 `https://<host>/api/health/live` 检查进程存活，通过 `https://<host>/api/health/ready` 检查 PostgreSQL schema、Redis、MinIO 和 worker 就绪状态。
 
 数据库 schema 的唯一初始化和升级入口为 `docker compose -f deploy/docker-compose.yml --env-file .env run --rm --no-deps api alembic upgrade head`。该命令仅迁移控制平面 PostgreSQL schema；API 启动时保留 VoiceForge 本地兼容数据库初始化。

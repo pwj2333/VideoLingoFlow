@@ -117,7 +117,7 @@ services:
       args:
         TORCH_INDEX: ${TORCH_INDEX:-cu128}
     restart: unless-stopped
-    command: ["celery", "-A", "backend.control_plane.celery_runtime.celery_app", "worker", "--loglevel=INFO", "--hostname=yunzhiai-worker@%h", "--pool=threads", "--concurrency=5", "--queues=videolingo_cpu,videolingo_gpu,videolingo_llm,videolingo_tts,videolingo_io,voiceforge_synthesis,voiceforge_voice,voiceforge_export"]
+    command: ["celery", "-A", "backend.control_plane.celery_runtime.celery_app", "worker", "--loglevel=INFO", "--hostname=yunzhiai-worker@%h", "--pool=threads", "--concurrency=5", "--queues=videolingo_cpu,videolingo_gpu,videolingo_llm,videolingo_tts,videolingo_io"]
     # 需要 GPU 推理时取消下行注释（宿主需安装 NVIDIA Container Toolkit）
     # deploy:
     #   resources:
@@ -162,6 +162,13 @@ services:
       interval: 15s
       timeout: 8s
       retries: 6
+
+  voiceforge-worker:
+    extends:
+      service: worker
+    command: ["celery", "-A", "backend.voiceforge.tasks.celery_app.celery_app", "worker", "--loglevel=INFO", "--hostname=voiceforge@%h", "--pool=threads", "--concurrency=5", "--queues=voiceforge_synthesis,voiceforge_voice,voiceforge_export"]
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A backend.voiceforge.tasks.celery_app.celery_app inspect ping -d voiceforge@$$HOSTNAME --timeout=3 | grep -q pong"]
 
   proxy:
     image: nginx:1.27-alpine
