@@ -1,14 +1,12 @@
 import ThemeToggle from "@/components/shared/ThemeToggle";
-import UserSubscriptionDialog from "@/components/UserSubscriptionDialog";
 import { useState, useEffect } from "react";
-import { Bell, CheckCircle2, Cpu, HardDrive, MemoryStick, Megaphone, MonitorCog, PanelLeft, PanelLeftClose, RefreshCw, Sparkles, TriangleAlert, UserRound, Users } from "lucide-react";
+import { Bell, CheckCircle2, Cpu, HardDrive, MemoryStick, Megaphone, MonitorCog, PanelLeft, PanelLeftClose, RefreshCw, Sparkles, TriangleAlert, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { changeControlProjectMember, listControlProjectMembers, listControlProjects, removeControlProjectMember, type ControlProjectMember } from "@/api/controlPlane";
 import { batchApi, type SystemMetrics } from "@/api/batch";
 import { publicInfoApi } from "@/api/publicInfo";
 import { useProjectStore } from "@/stores/projectStore";
 import { useControlStore } from "@/stores/controlStore";
-import { useSubscriptionStore } from "@/stores/subscriptionStore";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import type { RuntimeNotification, useHeaderInbox } from "@/hooks/useHeaderInbox";
 
@@ -156,9 +154,6 @@ export default function Header({
   const [memberRole, setMemberRole] = useState<"viewer" | "editor">("viewer");
   const [memberError, setMemberError] = useState("");
   const { projects, currentProjectId, setProjects, setCurrentProjectId } = useProjectStore();
-  const subscriptionStatus = useSubscriptionStore((s) => s.status);
-  const fetchSubscriptionStatus = useSubscriptionStore((s) => s.fetchStatus);
-  const [subscriptionOpen, setSubscriptionOpen] = useState(false);
   const [announcementOpen, setAnnouncementOpen] = useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [appVersion, setAppVersion] = useState("");
@@ -168,10 +163,6 @@ export default function Header({
       if (session) setProjects(await listControlProjects());
     }).catch(() => setUser(null));
   }, [refreshSession, setProjects, setUser]);
-
-  useEffect(() => {
-    fetchSubscriptionStatus();
-  }, [fetchSubscriptionStatus]);
 
   // 顶栏版本角标：从后端读取本地版本（不访问云端），失败时保留兜底展示
   useEffect(() => {
@@ -250,6 +241,7 @@ export default function Header({
           <span className="text-[10px] font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded-md uppercase tracking-widest">
             {appVersion ? `v${appVersion.replace(/^v/i, "")}` : "v2.0"}
           </span>
+          <span className="text-[10px] font-semibold text-muted-foreground">自用版</span>
         </div>
       </div>
       <div className="flex items-center gap-1.5">
@@ -287,34 +279,6 @@ export default function Header({
             <Users className="w-[18px] h-[18px]" />
           </button>
         )}
-        <button
-          onClick={() => setSubscriptionOpen(true)}
-          className={cn(
-            "flex items-center gap-2 px-2.5 py-1.5 rounded-xl transition-all duration-200 text-xs font-medium",
-            "hover:bg-accent active:scale-95"
-          )}
-          title="用户和订阅"
-        >
-          <div
-            className={cn(
-              "w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold transition-all duration-200",
-              subscriptionStatus?.user_type === "subscribed"
-                ? "bg-warning/90 text-warning-foreground shadow-sm shadow-warning/30"
-                : subscriptionStatus?.user_type === "registered"
-                ? "bg-info/90 text-info-foreground shadow-sm shadow-info/30"
-                : "bg-muted text-muted-foreground"
-            )}
-          >
-            <UserRound className="w-3.5 h-3.5" />
-          </div>
-          <span className="hidden lg:inline text-muted-foreground">
-            {subscriptionStatus?.user_type === "subscribed"
-              ? "订阅用户"
-              : subscriptionStatus?.user_type === "registered"
-              ? "注册用户"
-              : "游客"}
-          </span>
-        </button>
       </div>
       {membersOpen && (
         <div className="absolute right-5 top-12 z-30 w-80 border border-border bg-background p-4 shadow-lg rounded-lg">
@@ -338,7 +302,6 @@ export default function Header({
           {memberError && <p className="mt-2 text-xs text-destructive">{memberError}</p>}
         </div>
       )}
-      <UserSubscriptionDialog open={subscriptionOpen} onOpenChange={setSubscriptionOpen} />
       <Dialog open={announcementOpen} onOpenChange={setAnnouncementOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
@@ -415,18 +378,6 @@ export default function Header({
                         </span>
                       </div>
                       <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-foreground/90">{item.description}</p>
-                      {item.link === "subscription" && (
-                        <button
-                          onClick={() => {
-                            setNotificationOpen(false);
-                            setSubscriptionOpen(true);
-                          }}
-                          className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/20"
-                        >
-                          <UserRound className="w-3.5 h-3.5" />
-                          前往「用户和订阅」开通更多权益
-                        </button>
-                      )}
                     </div>
                   </div>
                 </div>

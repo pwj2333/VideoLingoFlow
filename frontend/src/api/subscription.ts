@@ -47,6 +47,7 @@ export interface SubscriptionLinks {
 
 export interface SubscriptionStatus {
   software_id: string;
+  self_use?: boolean;
   is_logged_in: boolean;
   user_type: UserType;
   user_info: UserInfo | null;
@@ -103,11 +104,8 @@ export function isSubscriptionBlocked(error: any) {
 }
 
 export function getQuotaExhaustedMessage(status: SubscriptionStatus | null) {
-  if (!status) return "额度不足，请前往“用户和订阅”页面查看详情。";
-  if (status.user_type === "guest") {
-    return "游客你好，你的每日免费额度已经用完，请注册获取更多免费额度，或者明日再来！感谢您的使用和支持！";
-  }
-  return "尊敬的注册用户你好，温馨提示您的免费额度或订阅时长已用完，请订阅已获得更多使用时长。";
+  if (status?.self_use) return "本地自用模式未设置任务额度，请检查工作流和服务配置。";
+  return "当前任务不可执行，请检查服务状态或接口配置。";
 }
 
 /**

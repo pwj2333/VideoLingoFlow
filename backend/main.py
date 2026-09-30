@@ -197,7 +197,7 @@ app.include_router(musicgen_interfaces.router, prefix="/api/musicgen-interfaces"
 app.include_router(separation_interfaces.router, prefix="/api/separation-interfaces", tags=["separation-interfaces"])
 app.include_router(ocr_interfaces.router, prefix="/api/ocr-interfaces", tags=["ocr-interfaces"])
 app.include_router(publish.router, prefix="/api/publish", tags=["publish"])
-app.include_router(subscription.router, prefix="/api/subscription", tags=["subscription"])
+app.include_router(subscription.self_use_router if os.getenv("YUNZHIAI_SELF_USE", "1") == "1" else subscription.router, prefix="/api/subscription", tags=["subscription"])
 app.include_router(public_info.router, tags=["public-info"])
 app.include_router(github_update.router, tags=["github-update"])
 app.include_router(control_plane.router, prefix="/api/control", tags=["control-plane"])

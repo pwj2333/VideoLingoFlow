@@ -93,7 +93,7 @@ export default function Community() {
 
   const requireSubscription = () => {
     if (isSubscribed) return true;
-    alert("社区资源下载和安装仅对订阅用户开放，请先订阅后再使用。", "warning");
+    alert("社区资源当前不可用，请检查服务配置。", "warning");
     return false;
   };
 

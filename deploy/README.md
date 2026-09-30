@@ -1,5 +1,7 @@
 # 集群基线
 
+本发行版的 Compose 默认启用 `YUNZHIAI_SELF_USE=1`，用于个人非商业自用；本地任务不连接原项目云端订阅服务。第三方在线能力仍需单独配置。公网部署需自行添加身份验证或限制来源 IP。
+
 ## GitHub Actions 一键发布与部署
 
 `.github/workflows/docker-release.yml` 会在 `main` 推送时构建 CPU Docker 镜像并发布到 GHCR。也可以在 Actions 页面手动运行工作流并勾选 `deploy`，通过 SSH 执行服务器更新。

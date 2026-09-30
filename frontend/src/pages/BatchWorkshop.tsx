@@ -185,7 +185,7 @@ export default function BatchWorkshop() {
   const handleSubscriptionError = (e: any) => {
     if (!isSubscriptionBlocked(e)) return false;
     if (isDeviceLimitError(e)) {
-      showAlert(`${getSubscriptionError(e)}\n请前往“用户和订阅”页面查看当前已绑定设备数。`, "warning");
+      showAlert(getSubscriptionError(e), "warning");
       return true;
     }
     const status = useSubscriptionStore.getState().status;

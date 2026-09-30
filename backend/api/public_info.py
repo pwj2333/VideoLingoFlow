@@ -1,4 +1,5 @@
 import asyncio
+import os
 
 from fastapi import APIRouter, HTTPException
 
@@ -34,6 +35,8 @@ def _extract_download_url(update: dict | None) -> str:
 
 @router.get("")
 async def get_public_info():
+    if os.getenv("YUNZHIAI_SELF_USE", "1") == "1":
+        return {"software_id": "yunzhiai", "local_version": _local_version(), "update": None, "announcements": [], "update_error": None, "announcement_error": None}
     client = get_cloud_auth_service()._client
     update_error = None
     announcement_error = None
@@ -75,6 +78,8 @@ async def get_public_info():
 @router.get("/announcements")
 async def get_announcements():
     """仅获取项目公告（供「刷新公告」按钮使用，不涉及版本检查）。"""
+    if os.getenv("YUNZHIAI_SELF_USE", "1") == "1":
+        return {"announcements": [], "error": None}
     client = get_cloud_auth_service()._client
     try:
         latest = client.get_latest_announcements(SOFTWARE_CODE)
@@ -102,6 +107,8 @@ async def get_local_version():
 @router.get("/download-url")
 async def get_download_url():
     """从云端接口获取最新版本的下载地址（供前端「获取下载地址」按钮调用）。"""
+    if os.getenv("YUNZHIAI_SELF_USE", "1") == "1":
+        raise HTTPException(status_code=404, detail="本地自用模式不提供云端下载")
     client = get_cloud_auth_service()._client
     try:
         update = client.check_update(SOFTWARE_CODE)

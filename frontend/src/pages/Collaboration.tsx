@@ -37,7 +37,7 @@ function LanModeSwitch({ isSubscribed }: { isSubscribed: boolean }) {
 
   const handleToggle = async (value: boolean) => {
     if (value && !isSubscribed) {
-      alert("多人协作功能仅对订阅用户开放，请先订阅后再开启。", "warning");
+      alert("多人协作当前不可用，请检查服务配置。", "warning");
       return;
     }
     if (!(await confirm(`确认${value ? "开启" : "关闭"}局域网协作？\n修改配置后需要重启管理器才能生效。`))) return;
@@ -79,7 +79,7 @@ function RemoteModeSwitch({ isSubscribed }: { isSubscribed: boolean }) {
 
   const handleToggle = async (value: boolean) => {
     if (value && !isSubscribed) {
-      alert("多人协作功能仅对订阅用户开放，请先订阅后再开启。", "warning");
+      alert("多人协作当前不可用，请检查服务配置。", "warning");
       return;
     }
     if (!(await confirm(value

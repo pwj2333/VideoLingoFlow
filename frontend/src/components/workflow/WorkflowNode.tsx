@@ -3391,7 +3391,7 @@ function WorkflowNodeComponent({ data, id, selected }: NodeProps) {
               onPointerDown={(e) => e.stopPropagation()}
             />
           </label>
-          {/* 查询用量和历史：前往网页查看额度 */}
+          {/* 外部能力需由使用者自行配置。 */}
           <a
             href="https://github.com/pwj2333/VideoLingoFlow/issues"
             target="_blank"
@@ -3401,7 +3401,7 @@ function WorkflowNodeComponent({ data, id, selected }: NodeProps) {
             className="w-full inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium text-slate-700 dark:text-slate-300 bg-slate-500/10 border border-slate-500/20 hover:bg-slate-500/20 transition-colors"
           >
             <ExternalLink className="w-3.5 h-3.5" />
-            查询用量和历史
+            配置外部能力
           </a>
         </div>
       )}
@@ -3417,7 +3417,7 @@ function WorkflowNodeComponent({ data, id, selected }: NodeProps) {
             className="w-full inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-md text-[11px] font-medium text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors"
           >
             <ExternalLink className="w-3.5 h-3.5" />
-            前往网页设置
+            配置外部能力
           </a>
 
           {/* 第二行：虚拟邮箱下拉选择 + 刷新按钮 */}

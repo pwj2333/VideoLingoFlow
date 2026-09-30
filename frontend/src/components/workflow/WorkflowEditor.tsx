@@ -411,7 +411,7 @@ export default function WorkflowEditor({ workflowId, taskId, onExecute }: Props)
   const handleSubscriptionError = useCallback((err: any) => {
     if (!isSubscriptionBlocked(err)) return false;
     if (isDeviceLimitError(err)) {
-      alert(`${getSubscriptionError(err)}\n请前往“用户和订阅”页面查看当前已绑定设备数。`);
+      alert(getSubscriptionError(err));
       return true;
     }
     const status = useSubscriptionStore.getState().status;

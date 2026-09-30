@@ -68,6 +68,7 @@ services:
     environment:
       CLUSTER_MODE: "1"
       VIDEOLINGO_REMOTE_MODE: ${VIDEOLINGO_REMOTE_MODE:-0}
+      YUNZHIAI_SELF_USE: ${YUNZHIAI_SELF_USE:-1}
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
       POSTGRES_DB: ${POSTGRES_DB}
@@ -128,6 +129,7 @@ services:
     #           capabilities: [gpu]
     environment:
       CLUSTER_MODE: "1"
+      YUNZHIAI_SELF_USE: ${YUNZHIAI_SELF_USE:-1}
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
       POSTGRES_DB: ${POSTGRES_DB}

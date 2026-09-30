@@ -7,6 +7,17 @@ from backend.utils.quota_notice import notify_quota_exhausted
 
 
 router = APIRouter()
+self_use_router = APIRouter()
+
+
+@self_use_router.get("/status")
+async def self_use_status():
+    return get_subscription_guard().get_subscription_state()
+
+
+@self_use_router.post("/quota-notice")
+async def self_use_quota_notice():
+    return {"notified": False, "state": get_subscription_guard().get_subscription_state()}
 
 
 class LoginRequest(BaseModel):
