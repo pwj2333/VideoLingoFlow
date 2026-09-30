@@ -15,7 +15,7 @@ FROM node:20-bullseye AS frontend
 WORKDIR /build/frontend
 COPY frontend/package.json frontend/package-lock.json* ./
 # 无 lock 时回退普通 install；有 lock 时用 ci（更快、可复现）
-RUN if [ -f package-lock.json ]; then npm ci || npm install; else npm install; fi
+RUN if [ -f package-lock.json ]; then npm ci --legacy-peer-deps || npm install --legacy-peer-deps; else npm install --legacy-peer-deps; fi
 COPY frontend/ ./
 RUN npm run build && rm -rf /build/frontend/node_modules
 
