@@ -172,7 +172,7 @@ class PromptService:
     def load_json_templates(self, scope: Optional[str] = None) -> list[dict]:
         """Load prompt templates from prompt_templates.json.
 
-        scope 用于把 Prompt 预设限定在某个功能域（如 voiceforge 晴沐配音谷）。
+        scope 用于把 Prompt 预设限定在某个功能域（如 voiceforge 云智AI配音）。
         未传 scope 时返回全部；模板缺失 scope 时按 "global" 处理。
         """
         with self._json_lock:

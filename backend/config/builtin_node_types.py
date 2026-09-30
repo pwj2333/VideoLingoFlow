@@ -671,7 +671,7 @@ BUILTIN_NODE_TYPES = [
         "name": "音频素材库",
         "execution_domain": "process",
         "category": "asset",
-        "description": "从 URL、本地路径或晴沐配音谷素材库（ID）获取音频素材，下载/复制到当前工作文件夹；输出素材路径与素材全信息 JSON。",
+        "description": "从 URL、本地路径或云智AI配音素材库（ID）获取音频素材，下载/复制到当前工作文件夹；输出素材路径与素材全信息 JSON。",
         "icon": "Music",
         "color": "#a855f7",
         "inputs": [
@@ -751,7 +751,7 @@ BUILTIN_NODE_TYPES = [
         "name": "音色素材库",
         "execution_domain": "process",
         "category": "asset",
-        "description": "从晴沐配音谷音色库选择音色（记录音色ID），执行时回查音色详情并把设计样音复制到工作目录；输出素材路径（试听音频）与音色全信息 JSON。",
+        "description": "从云智AI配音音色库选择音色（记录音色ID），执行时回查音色详情并把试听样音复制到工作目录；输出素材路径与音色全信息 JSON。",
         "icon": "AudioLines",
         "color": "#a29bfe",
         "inputs": [
@@ -4464,7 +4464,7 @@ BUILTIN_NODE_TYPES = [
         "name": "在线去水印去字幕",
         "execution_domain": "thread",
         "category": "video",
-        "description": "晴沐智坊提供的在线高质量去除视频中的水印服务，使用前确保注册登录晴沐智坊账号，使用将消耗软件的通用积分，确保积分足够视频消耗，1.3分钱每秒。详情访问晴沐hub：https://www.licorxj.online/capability-hub",
+        "description": "云智AI提供的在线高质量去除视频中的水印服务，使用前请配置对应能力接口并确认服务商计费规则。详情请查看项目部署文档。",
         "icon": "Eraser",
         "color": "#8b5cf6",
         "inputs": [
@@ -4491,7 +4491,7 @@ BUILTIN_NODE_TYPES = [
         "name": "QM虚拟邮箱",
         "execution_domain": "thread",
         "category": "network_request",
-        "description": "通过晴沐智坊虚拟邮箱，向已验证的转发目标发送验证码邮件。费用2分钱/条（云端处理）。使用前请确保已在网页端设置并验证转发目标。详情访问：https://www.licorxj.online/mail-forwarding",
+        "description": "通过云智AI虚拟邮箱向已验证的转发目标发送验证码邮件。使用前请先配置邮件服务并验证转发目标。",
         "icon": "Mail",
         "color": "#10b981",
         "inputs": [

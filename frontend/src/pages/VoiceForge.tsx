@@ -75,7 +75,7 @@ export function VoiceForgeHome() {
     <PageBackground tone="voiceforge" className="mx-auto max-w-7xl space-y-6 p-1">
       <PageHeader
         icon={Mic2}
-        title="晴沐配音谷"
+        title="云智AI 配音"
         detail="项目、配音任务与音频产出的统一管理台"
         actions={
           <>

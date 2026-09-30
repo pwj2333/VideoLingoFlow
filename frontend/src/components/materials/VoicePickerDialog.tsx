@@ -193,7 +193,7 @@ export function VoicePickerDialog({
       <DialogContent className="max-w-5xl">
         <DialogHeader>
           <DialogTitle>选择音色</DialogTitle>
-          <DialogDescription>来自晴沐配音谷音色库,支持分组浏览与性别/年龄/语言组合筛选;试听后选择,自动填入 vf:voices:&lt;id&gt; 引用。</DialogDescription>
+          <DialogDescription>来自云智AI音色库,支持分组浏览与性别/年龄/语言组合筛选;试听后选择,自动填入 vf:voices:&lt;id&gt; 引用。</DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -288,7 +288,7 @@ export function VoicePickerDialog({
               <EmptyState
                 icon={AudioLines}
                 title="没有匹配的音色"
-                detail={hasFilters ? "当前筛选条件下无结果,试试放宽条件。" : "音色库为空,或到晴沐配音谷的音色库中创建新音色。"}
+                detail={hasFilters ? "当前筛选条件下无结果,试试放宽条件。" : "音色库为空,请先在云智AI音色库中创建音色。"}
                 action={
                   hasFilters ? (
                     <Button variant="outline" onClick={resetFilters}>重置筛选</Button>

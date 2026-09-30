@@ -1,4 +1,8 @@
-# VideoLingoFlow
+# 云智AI
+
+> 基于 VideoLingoFlow 的云智AI定制发行版：AI 视频创作、配音、字幕与自动化工作流平台。
+
+本发行版移除了原项目的个人联系方式与品牌入口，并保留原项目 CC BY-NC 4.0 署名要求。商业使用、再发布和第三方组件使用请先阅读 [LICENSE](LICENSE)。
 
 > 🌐 语言 / Language：**简体中文** · [English](README.en.md)
 
@@ -106,7 +110,7 @@ VideoLingoFlow/
 │   ├── engine/               # 执行引擎：批量执行器、步骤流水线、任务管理
 │   ├── steps/                # 80+ 节点执行步骤（s_*.py，继承 BaseStep）
 │   ├── config/               # 内置节点定义、工作流文件、接口配置
-│   ├── voiceforge/           # 晴沐配音谷（独立数据库 + Celery 任务）
+│   ├── voiceforge/           # 云智AI配音（独立数据库 + Celery 任务）
 │   ├── aigc/                 # AIGC 服务（ComfyUI/即梦/RunningHub）
 │   ├── publish/              # 多平台发布（Social MCP 客户端）
 │   ├── pi_rpc/               # 小 Pi 智能体桥接（会话管理、RPC 客户端）

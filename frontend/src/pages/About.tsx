@@ -11,25 +11,22 @@ import {
   Info,
   Layers,
   Loader2,
-  Mail,
   Megaphone,
   MessageSquareText,
   Plug,
   Puzzle,
-  QrCode,
   RefreshCw,
   Rocket,
   Share2,
   Sparkles,
   Users,
   Workflow,
-  ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { PageBackground } from "@/components/shared/PageBackground";
 
-const GITHUB_URL = "https://github.com/licorxj/VideoLingoFlow.git";
+const GITHUB_URL = "https://github.com/pwj2333/VideoLingoFlow";
 
 const highlights = [
   [Workflow, "节点式工作流", "拖拽即搭建：40+ 内置节点任意连线组合，保存、复用、批量重跑，把创意沉淀成可复用的流水线。"],
@@ -154,7 +151,6 @@ export default function About() {
   const [updateStatus, setUpdateStatus] = useState<{ status: string; message: string; log: string[] }>({ status: "idle", message: "", log: [] });
   const [updatePolling, setUpdatePolling] = useState(false);
   const [announcementRefreshing, setAnnouncementRefreshing] = useState(false);
-  const [qrPreview, setQrPreview] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/public-info")
@@ -267,10 +263,10 @@ export default function About() {
               <Sparkles className="h-5 w-5" />
             </span>
             <h2 className="bg-gradient-to-r from-primary via-indigo-500 to-primary bg-clip-text text-2xl font-extrabold tracking-tight text-transparent">
-              关于 VideoLingoFlow
+              关于云智AI
             </h2>
           </div>
-          <p className="mt-1.5 text-sm text-muted-foreground">流连视听 · AI 视频创作与出海本地化工作台 —— 节点、接口、Agent，自由组合，百变任务</p>
+          <p className="mt-1.5 text-sm text-muted-foreground">AI 视频创作与本地化工作台 —— 节点、接口、Agent，自由组合，快速交付</p>
         </div>
         <span className="animate-pulse-glow rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">v{localVersion}</span>
       </div>
@@ -284,12 +280,12 @@ export default function About() {
           <div className="pointer-events-none absolute inset-0 opacity-[0.05] bg-[linear-gradient(hsl(var(--foreground))_1px,transparent_1px),linear-gradient(90deg,hsl(var(--foreground))_1px,transparent_1px)] bg-[size:28px_28px]" />
           <div className="relative flex h-full flex-col items-center justify-center gap-5 text-center">
             <div className="grid h-20 grid-rows-5 place-items-center">
-              <img src="/vlf-long-logo.png" alt="VideoLingoFlow" className="row-span-5 row-start-1 h-20 w-auto max-w-none object-contain" />
+              <div className="grid h-20 w-20 place-items-center rounded-3xl bg-gradient-to-br from-primary to-cyan-500 text-white shadow-xl shadow-primary/20"><Sparkles className="h-10 w-10" /></div>
             </div>
             <div className="flex flex-col items-center gap-1.5">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary">VideoLingoFlow</p>
-              <h3 className="text-xl font-extrabold">流连视听 <span className="text-base font-semibold text-muted-foreground">v{localVersion}</span></h3>
-              <p className="text-sm text-muted-foreground">出品方：晴沐智坊</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary">YUNZHI AI</p>
+              <h3 className="text-xl font-extrabold">云智AI <span className="text-base font-semibold text-muted-foreground">v{localVersion}</span></h3>
+              <p className="text-sm text-muted-foreground">AI 视频创作与自动化工作流平台</p>
             </div>
             <div className="flex flex-wrap items-center justify-center gap-2">
               {heroChips.map((chip) => (
@@ -383,38 +379,25 @@ export default function About() {
       </div>
 
       <div className="grid gap-4">
-        {/* ===== 联系我们 ===== */}
+        {/* ===== 项目与许可 ===== */}
         <section className="rounded-2xl border border-border/60 bg-card/90 p-6 shadow-lg">
           <div className="mb-5 flex items-center gap-3">
-            <span className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-md shadow-emerald-500/20"><QrCode className="h-4 w-4" /></span>
+            <span className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-md shadow-emerald-500/20"><Info className="h-4 w-4" /></span>
             <div>
-              <h3 className="font-bold">联系我们</h3>
-              <p className="text-[11px] text-muted-foreground">一起碰撞灵感，或把繁琐任务交给我们</p>
+              <h3 className="font-bold">项目与许可</h3>
+              <p className="text-[11px] text-muted-foreground">云智AI 基于 VideoLingoFlow 定制，遵循原项目许可</p>
             </div>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-border/60 bg-card p-4 text-center transition-all hover:border-primary/40 hover:shadow-lg">
-              <Button variant="outline" size="sm" onClick={() => window.open("https://www.licorxj.online/home", "_blank", "noopener,noreferrer")}><ExternalLink className="mr-2 h-4 w-4" />访问晴沐智坊</Button>
-              <p className="text-xs text-muted-foreground">官方网站 🌐</p>
+              <Button variant="outline" size="sm" onClick={() => window.open(GITHUB_URL, "_blank", "noopener,noreferrer")}><Github className="mr-2 h-4 w-4" />云智AI 项目仓库</Button>
+              <p className="text-xs text-muted-foreground">源码与部署文档</p>
             </div>
             <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border/60 bg-card p-4 text-center transition-all hover:border-primary/40 hover:shadow-lg">
-              <button type="button" onClick={() => setQrPreview("/imge/qqun.png")} title="点击放大企鹅群二维码" className="transition-transform hover:scale-105">
-                <img src="/imge/qqun.png" alt="企鹅群二维码" className="h-24 w-24 rounded-lg border border-border object-contain" />
-              </button>
-              <p className="text-xs text-muted-foreground">企鹅群 🐧</p>
-            </div>
-            <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border/60 bg-card p-4 text-center transition-all hover:border-primary/40 hover:shadow-lg">
-              <button type="button" onClick={() => setQrPreview("/imge/licor.png")} title="点击放大开发者微信二维码" className="transition-transform hover:scale-105">
-                <img src="/imge/licor.png" alt="开发者微信二维码" className="h-24 w-24 rounded-lg border border-border object-contain" />
-              </button>
-              <p className="text-xs text-muted-foreground">开发者微信 💬</p>
-            </div>
-            <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-border/60 bg-card p-4 text-center transition-all hover:border-primary/40 hover:shadow-lg">
-              <a href="mailto:727909969@qq.com" className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"><Mail className="h-4 w-4" />727909969@qq.com</a>
-              <p className="text-xs text-muted-foreground">企业邮箱 📧</p>
+              <p className="text-sm leading-6 text-muted-foreground">本项目自有代码与文档采用 CC BY-NC 4.0。云智AI 为基于 VideoLingoFlow 的定制发行版，使用和再发布请保留原项目署名并遵守第三方组件许可。</p>
             </div>
           </div>
-          <p className="mt-6 text-center text-lg font-bold leading-7 text-muted-foreground">温馨提示：除了在分享社区找工作流，你也可以找我定制工作流哦～ 😉 甚至可以把这些无聊的任务甩给我们来包办！🚀✨</p>
+          <p className="mt-6 text-center text-sm leading-7 text-muted-foreground">部署帮助请通过项目仓库提交 Issue。</p>
         </section>
       </div>
       <GuideDialog guide={guide} open={Boolean(guide)} onOpenChange={(open) => !open && setGuide(null)} />
@@ -452,14 +435,6 @@ export default function About() {
           {updateStatus.status !== "updating" && updateStatus.status !== "starting" && (
             <Button variant="outline" onClick={() => setUpdateDialogOpen(false)}>关闭</Button>
           )}
-        </DialogContent>
-      </Dialog>
-      <Dialog open={Boolean(qrPreview)} onOpenChange={(open) => !open && setQrPreview(null)}>
-        <DialogContent className="max-w-xs">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><QrCode className="h-4 w-4 text-primary" />扫码添加</DialogTitle>
-          </DialogHeader>
-          <img src={qrPreview || ""} alt="二维码" className="mx-auto w-full max-w-[240px] rounded-lg border border-border object-contain" />
         </DialogContent>
       </Dialog>
     </PageBackground>

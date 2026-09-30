@@ -26,7 +26,7 @@ export default function UserSubscriptionDialog({ open, onOpenChange }: UserSubsc
             用户和订阅
           </DialogTitle>
           <DialogDescription>
-            连接晴沐智坊云端会员系统，管理登录、权益和本地使用额度
+            管理云智AI账号、权益和本地使用额度
           </DialogDescription>
         </DialogHeader>
         <div className="px-6 pb-6">

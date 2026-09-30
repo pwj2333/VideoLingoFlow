@@ -146,7 +146,7 @@ async def quota_notice():
 @router.get("/links")
 async def get_links():
     return {
-        "products": "https://www.licorxj.online/products",
-        "home": "https://www.licorxj.online/home",
-        "versions": "https://www.licorxj.online/versions",
+        "products": "https://github.com/pwj2333/VideoLingoFlow",
+        "home": "https://github.com/pwj2333/VideoLingoFlow",
+        "versions": "https://github.com/pwj2333/VideoLingoFlow/releases",
     }

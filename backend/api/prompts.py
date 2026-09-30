@@ -31,7 +31,7 @@ async def get_current_languages():
 async def list_json_templates(scope: Optional[str] = None):
     """Get prompt templates from prompt_templates.json.
 
-    scope 用于按功能域过滤（如 scope=voiceforge 只返回晴沐配音谷的 Prompt 预设）。
+    scope 用于按功能域过滤（如 scope=voiceforge 只返回云智AI配音的 Prompt 预设）。
     """
     svc = get_prompt_service()
     if scope == "voiceforge":
@@ -103,7 +103,7 @@ async def delete_json_template(prompt_id: str):
     if not template:
         raise HTTPException(status_code=404, detail=f"Template '{prompt_id}' not found")
     if (template.get("scope") or "global") != "voiceforge":
-        raise HTTPException(status_code=403, detail="只能删除晴沐配音谷的 Prompt 预设")
+        raise HTTPException(status_code=403, detail="只能删除云智AI配音的 Prompt 预设")
     svc.delete_json_template(prompt_id)
     return {"ok": True, "prompt_id": prompt_id}
 

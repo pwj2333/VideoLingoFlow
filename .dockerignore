@@ -23,7 +23,6 @@ temp/
 frontend/node_modules/
 frontend/.vite/
 frontend/dist/
-frontend/src/
 
 # ---- 环境 / 凭据 ----
 .env

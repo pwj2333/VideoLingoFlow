@@ -591,7 +591,7 @@ def register_voice_sample(
 
     音频本体按音色库约定落到 ``voices/<voice_id>/`` 下：主片段记 sample_storage_key，
     克隆参考音频（如有）记 reference_storage_key；随后写 voice_config.json 使其
-    在「晴沐配音谷 → 音色库」中可见可用。
+    在「云智AI配音 → 音色库」中可见可用。
     """
     voice_id = uuid.uuid4().hex
     sample_clip = Path(sample_clip)

@@ -1,5 +1,23 @@
 # 集群基线
 
+## GitHub Actions 一键发布与部署
+
+`.github/workflows/docker-release.yml` 会在 `main` 推送时构建 CPU Docker 镜像并发布到 GHCR。也可以在 Actions 页面手动运行工作流并勾选 `deploy`，通过 SSH 执行服务器更新。
+
+服务器首次部署前，在目标目录准备 `.env`（可由 `deploy/.env.example` 复制），并在 GitHub 仓库 Settings → Secrets and variables → Actions 中配置：
+
+| Secret | 说明 |
+| --- | --- |
+| `SERVER_HOST` | 服务器地址 |
+| `SERVER_USER` | SSH 用户 |
+| `SERVER_SSH_KEY` | SSH 私钥 |
+| `SERVER_PORT` | SSH 端口，可选，默认 22 |
+| `SERVER_APP_DIR` | 服务器上的项目目录 |
+| `GHCR_USERNAME` | 可读取 GHCR 私有镜像的账号 |
+| `GHCR_TOKEN` | 该账号的 GHCR read:packages token |
+
+工作流默认构建 CPU 镜像，适合无 NVIDIA Container Toolkit 的服务器。需要 GPU 时，把工作流中的 `TORCH_INDEX=cpu` 改为 `cu128`，并按下文启用 Compose 的 GPU 资源配置。
+
 1. 复制 `deploy/.env.example` 到仓库根目录的 `.env` 并填写随机密码：
    ```bash
    cp deploy/.env.example .env

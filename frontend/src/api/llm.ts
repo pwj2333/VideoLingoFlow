@@ -26,7 +26,7 @@ export interface PromptTemplate {
 export const VOICEFORGE_PROMPT_SCOPE = "voiceforge";
 
 export const promptApi = {
-  // scope=voiceforge 时只返回晴沐配音谷的 Prompt 预设
+  // scope=voiceforge 时只返回云智AI配音的 Prompt 预设
   listTemplates: (scope?: string) =>
     client.get<{ templates: PromptTemplate[] }>("/api/prompts/templates", {
       params: scope ? { scope } : undefined,

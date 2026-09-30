@@ -4,6 +4,7 @@
 自动获取/创建并缓存 qmhub API Key（cbk_xxx 格式）。
 """
 import json
+import os
 from pathlib import Path
 
 # API Key 缓存文件路径
@@ -87,8 +88,11 @@ def ensure_api_key() -> str:
     import requests
 
     # 创建新 Key
+    base_url = os.environ.get("QM_HUB_BASE_URL", "").strip().rstrip("/")
+    if not base_url:
+        raise RuntimeError("未配置 QM_HUB_BASE_URL，无法创建能力服务 API Key")
     r = requests.post(
-        "https://www.licorxj.online/api/capability/keys",
+        f"{base_url}/api/capability/keys",
         headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
         json={"name": "videolingo-auto"},
         timeout=10,

@@ -1,7 +1,7 @@
 import ThemeToggle from "@/components/shared/ThemeToggle";
 import UserSubscriptionDialog from "@/components/UserSubscriptionDialog";
 import { useState, useEffect } from "react";
-import { Bell, CheckCircle2, Cpu, HardDrive, MemoryStick, Megaphone, MonitorCog, PanelLeft, PanelLeftClose, RefreshCw, TriangleAlert, UserRound, Users } from "lucide-react";
+import { Bell, CheckCircle2, Cpu, HardDrive, MemoryStick, Megaphone, MonitorCog, PanelLeft, PanelLeftClose, RefreshCw, Sparkles, TriangleAlert, UserRound, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { changeControlProjectMember, listControlProjectMembers, listControlProjects, removeControlProjectMember, type ControlProjectMember } from "@/api/controlPlane";
 import { batchApi, type SystemMetrics } from "@/api/batch";
@@ -240,10 +240,12 @@ export default function Header({
         >
           {collapsed ? <PanelLeft className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
         </button>
-        <img src="/brand-logo.png" alt="VideoLingoFlow" className="h-9 w-auto object-contain" />
+        <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-primary to-cyan-500 text-white shadow-md shadow-primary/20" aria-label="云智AI">
+          <Sparkles className="h-5 w-5" />
+        </div>
         <div className="flex items-baseline gap-2">
           <h1 className="text-lg font-extrabold tracking-tight text-foreground">
-            VideoLingoFlow <span className="text-sm font-medium text-muted-foreground">（流连视听）</span>
+            云智AI <span className="text-sm font-medium text-muted-foreground">（AI 视频创作工作台）</span>
           </h1>
           <span className="text-[10px] font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded-md uppercase tracking-widest">
             {appVersion ? `v${appVersion.replace(/^v/i, "")}` : "v2.0"}

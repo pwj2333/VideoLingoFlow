@@ -40,7 +40,7 @@ export default function WelcomeModal() {
           <div className="text-center space-y-2">
             <div className="flex items-center justify-center gap-2">
               <Sparkles className="w-6 h-6 text-primary" />
-              <h2 className="text-2xl font-bold text-foreground">欢迎使用 VideoLingoFlow</h2>
+              <h2 className="text-2xl font-bold text-foreground">欢迎使用云智AI</h2>
             </div>
             <p className="text-sm text-muted-foreground">AI 驱动的视频处理工作流平台</p>
           </div>
@@ -56,7 +56,7 @@ export default function WelcomeModal() {
         <div className="p-6 space-y-5">
           <div className="space-y-3">
             <p className="text-sm text-foreground/80 leading-relaxed">
-              VideoLingoFlow 是一个自由扩展的 AI 工作流框架，支持视频翻译、配音、字幕生成等多种任务。
+              云智AI 是一个自由扩展的 AI 工作流框架，支持视频翻译、配音、字幕生成等多种任务。
               通过智能节点和 Skill/MCP 扩展，你可以实现几乎任何视频处理需求。
             </p>
             <div className="grid grid-cols-2 gap-3">

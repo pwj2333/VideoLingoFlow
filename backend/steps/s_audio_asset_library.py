@@ -2,7 +2,7 @@
 """
 音频素材库节点（Step）
 
-作用：解析前端传入的素材来源（URL / 本地路径 / 晴沐配音谷素材库ID），
+作用：解析前端传入的素材来源（URL / 本地路径 / 云智AI配音素材库ID），
 将素材下载或复制到当前工作文件夹（task_dir）并重命名。
 
 输入：
@@ -65,7 +65,7 @@ class S_AudioAssetLibrary(BaseStep):
         # 本地路径
         if os.path.exists(source):
             return source, None, None, None
-        # 晴沐配音谷素材库：素材ID / 文件名 / storage_key，回查 vf_assets 还原真实位置与完整信息。
+        # 云智AI配音素材库：素材ID / 文件名 / storage_key，回查 vf_assets 还原真实位置与完整信息。
         vf_info = self._lookup_voiceforge_asset(source)
         if vf_info:
             vf = self._asset_access_url(vf_info)
@@ -75,7 +75,7 @@ class S_AudioAssetLibrary(BaseStep):
         raise ValueError(
             "无法识别该素材库ID。在线素材（如 ElevenLabs）请复制其素材「链接」(audio_url) 而非ID；"
             "chinaZ 素材的ID即详情页链接，可被直接识别；"
-            "晴沐配音谷本地素材请复制卡片上的「路径」(external_path) 或素材库ID。"
+            "云智AI配音本地素材请复制卡片上的「路径」(external_path) 或素材库ID。"
         )
 
     @staticmethod

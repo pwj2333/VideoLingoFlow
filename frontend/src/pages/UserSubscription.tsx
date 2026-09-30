@@ -226,8 +226,8 @@ export default function UserSubscription({ embedded = false }: { embedded?: bool
     ...status?.links,
     products: "https://68n.cn/PUweA",
     credits: "https://www.qianxun1688.com/liebiao/F8C59199B99DCADF",
-    home: "https://www.licorxj.online/home",
-    versions: "https://www.licorxj.online/versions",
+    home: "https://github.com/pwj2333/VideoLingoFlow",
+    versions: "https://github.com/pwj2333/VideoLingoFlow/releases",
   };
   const activeEntitlement = status?.active_entitlement || null;
   const projectEntitlements = useMemo(() => (status?.entitlements || []).filter((item) => getEntitlementProjectCode(item) === "vlf3387"), [status?.entitlements]);
@@ -583,7 +583,7 @@ export default function UserSubscription({ embedded = false }: { embedded?: bool
         {[
           { title: "购买订阅", desc: "开通或续费当前软件权益", url: links.products, icon: <Crown className="h-3.5 w-3.5" /> },
           { title: "购买积分", desc: "购买通用积分，用于虚拟邮箱、视频去字幕去水印等在线服务消耗", url: links.credits, icon: <Coins className="h-3.5 w-3.5" /> },
-          { title: "晴沐智坊主页", desc: "访问账号与产品主页", url: links.home, icon: <Sparkles className="h-3.5 w-3.5" /> },
+          { title: "云智AI 项目主页", desc: "访问项目仓库与部署文档", url: links.home, icon: <Sparkles className="h-3.5 w-3.5" /> },
           { title: "软件中心", desc: "查看版本与更新信息", url: links.versions, icon: <ExternalLink className="h-3.5 w-3.5" /> },
         ].map((item) => (
           <button
@@ -605,7 +605,7 @@ export default function UserSubscription({ embedded = false }: { embedded?: bool
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2"><UserPlus className="w-5 h-5 text-primary" />注册账号</DialogTitle>
-            <DialogDescription>通过邮箱验证码创建新的晴沐智坊云端账号</DialogDescription>
+            <DialogDescription>通过邮箱验证码创建新的云智AI云端账号</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

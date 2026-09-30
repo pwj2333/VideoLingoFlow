@@ -3260,7 +3260,7 @@ function WorkflowNodeComponent({ data, id, selected }: NodeProps) {
           <SeedanceVideoNode config={config} mode={seedanceMode} onChange={(k, v) => handleConfigChange(k, v)} />
         </div>
       )}
-      {/* 音频素材库：输入框 + 打开晴沐配音谷素材库按钮（嵌套弹窗） */}
+      {/* 音频素材库：输入框 + 打开云智AI配音素材库按钮（嵌套弹窗） */}
       {nodeType.id === "audio_asset_library" && (
         <AudioAssetLibraryNode
           config={config}
@@ -3393,7 +3393,7 @@ function WorkflowNodeComponent({ data, id, selected }: NodeProps) {
           </label>
           {/* 查询用量和历史：前往网页查看额度 */}
           <a
-            href="https://www.licorxj.online/capability-hub"
+            href="https://github.com/pwj2333/VideoLingoFlow/issues"
             target="_blank"
             rel="noopener noreferrer"
             onPointerDown={(e) => e.stopPropagation()}
@@ -3409,7 +3409,7 @@ function WorkflowNodeComponent({ data, id, selected }: NodeProps) {
         <div className="px-3 pb-3 pt-1 space-y-2">
           {/* 第一行：前往网页设置按钮 */}
           <a
-            href="https://www.licorxj.online/mail-forwarding"
+            href="https://github.com/pwj2333/VideoLingoFlow/issues"
             target="_blank"
             rel="noopener noreferrer"
             onPointerDown={(e) => e.stopPropagation()}

@@ -74,7 +74,7 @@
 | OCR字幕查找 | `subtitle_position_search` | 定位视频字幕区域：支持 OCR 自动查找（输出标注帧与相对坐标 JSON），也可手动框选字幕位置并设置片头片尾跳过时间 | thread | 视频(`video`:video) | 标注帧(`image`:image); 字幕坐标JSON(`json`:json) |
 | OCR字幕识别 | `subtitle_recognition` | 按字幕区域坐标用 OCR 识别字幕内容与时间轴，输出 ASR 格式结果 JSON | thread | 视频(`video`*:video); 字幕区域坐标(`json`:json) | 识别结果JSON(ASR)(`subtitle`:json) |
 | 切割片头片尾 | `video_clip_intro_outro` | 从主视频中裁剪片头与片尾，输出裁剪后的主视频、片头片段、片尾片段（ffmpeg 流拷贝，不重新编码） | thread | 主视频(`video`*:video) | 裁剪后主视频(`video`:video); 片头片段(`intro`:video); 片尾片段(`outro`:video) |
-| 在线去水印去字幕 | `online_watermark_removal` | 晴沐智坊提供的在线高质量去除视频中的水印服务，使用前确保注册登录晴沐智坊账号，使用将消耗软件的通用积分，确保积分足够视频消耗，1.3分钱每秒。详情访问晴沐hub：https://www.licorxj.online/capability-hub | thread | 媒体详情JSON(`url_json`:json) | 去水印视频(`video`:video); 任务记录(`json`:json) |
+| 在线去水印去字幕 | `online_watermark_removal` | 云智AI提供的在线高质量去除视频中的水印服务，使用前请配置对应能力接口并确认服务商计费规则。 | thread | 媒体详情JSON(`url_json`:json) | 去水印视频(`video`:video); 任务记录(`json`:json) |
 | 字幕烧录 | `merge_sub_video` | 将字幕烧录到视频 | thread | 视频(`video`*:video); 字幕(`subtitle`*:subtitle); 背景音乐(`audio`:audio); 配音音频(`dub`:audio) | 字幕视频(`video`:video) |
 | 按字幕切割视频 | `video_cut_by_subtitle` | 按 srt 字幕或句子 json 的时间轴切割视频，输出片段清单 json 与各视频片段 | thread | 视频(`video`*:video); SRT字幕(`srt`:subtitle); 句子JSON(`json`:json) | 切割信息(`json`:json); 视频片段清单(`video_segments`:json) |
 | 水印添加 | `watermark` | 为视频添加水印 | thread | 视频(`video`*:video); 水印图片(`image`:image) | 最终视频(`video`:video) |
@@ -210,7 +210,7 @@
 
 | 节点 | ID | 描述 | 执行域 | 输入接口 | 输出接口 |
 |------|----|------|-------|---------|---------|
-| QM虚拟邮箱 | `qm_virtual_mailbox` | 通过晴沐智坊虚拟邮箱，向已验证的转发目标发送验证码邮件。费用2分钱/条（云端处理）。使用前请确保已在网页端设置并验证转发目标。详情访问：https://www.licorxj.online/mail-forwarding | thread | 文本内容(`text`:text) | 发送结果(`json`:json) |
+| QM虚拟邮箱 | `qm_virtual_mailbox` | 通过云智AI虚拟邮箱向已验证的转发目标发送验证码邮件。使用前请先配置邮件服务并验证转发目标。 | thread | 文本内容(`text`:text) | 发送结果(`json`:json) |
 | 图床网存-kie | `kie_media_host` | 把本地图片 / 视频 / 音频上传到 KIE 免费媒体暂存，返回可直接访问的外链 URL，供其它接口（生图、生视频、对口型、图声生视频等）引用。支持 image / video / audio / file 四个输入口，可同时上传多个文件（已连接的口都会上传）。注意：本节点仅做文件暂存，不消耗生成额度；使用前请先注册 KIE 账号并获取 API Key，填入【全局设置 → 密钥管理器】，密钥名称必须为 KIEAI_API_KEY（也可在系统环境变量中设置同名变量）。 | process | 图片(`image`:image); 视频(`video`:video); 音频(`audio`:audio); 其它文件(`file`:filepath) | 首个链接(`url`:url); 链接列表(`urls`:json); 上传明细(`json`:json) |
 | 媒体转链接 | `media_to_url` | 上传本地视频/图片到腾讯云 VOD，返回 URL 及完整媒体详情（尺寸/时长/码率等）保存为 JSON | thread | 视频(`video`:video); 图片(`image`:image) | 媒体详情(`json`:json) |
 | 平台视频下载 | `platform_download` | 使用 yt-dlp 下载平台视频 | process | URL(`url`*:url) | 视频(`video`:video); 字幕(`subtitle`:subtitle); 封面(`image`:image); 下载文件名(`filename`:text) |
@@ -261,8 +261,8 @@
 | 素材入库 | `material_storage` | 将接入的视频/图片/音频素材归档到项目公共素材库并写入数据库。后端自动识别素材类型，按前端设置的素材属性（名称/分组标签/自定义标签/描述）入库，支持视频、图片、音频三种类型。 | thread | 素材(`media`:any) | 素材路径(`material`:any); 素材库引用(`library_ref`:text); 素材类型(`asset_type`:text); 素材ID(`asset_id`:text) |
 | 视频素材库 | `video_asset_library` | 从公共视频素材库选择素材（记录素材ID），执行时回查详情并复制到当前工作文件夹；输出素材路径与素材全信息 JSON。 | process | 来源(`any`:any) | 素材路径(`video`:video); 素材全信息JSON(`info`:json) |
 | 角色素材库 | `character_asset_library` | 从公共角色库选择角色（记录角色ID），执行时回查角色详情并把多视角图文件夹复制到工作目录；输出素材路径（图片文件夹）与角色全信息 JSON。 | process | 来源(`any`:any) | 素材路径(图片文件夹)(`path`:filepath); 素材全信息JSON(`info`:json) |
-| 音色素材库 | `voice_asset_library` | 从晴沐配音谷音色库选择音色（记录音色ID），执行时回查音色详情并把设计样音复制到工作目录；输出素材路径（试听音频）与音色全信息 JSON。 | process | 来源(`any`:any) | 素材路径(试听音频)(`audio`:audio); 素材全信息JSON(`info`:json) |
-| 音频素材库 | `audio_asset_library` | 从 URL、本地路径或晴沐配音谷素材库（ID）获取音频素材，下载/复制到当前工作文件夹；输出素材路径与素材全信息 JSON。 | process | 来源(`any`:any) | 素材路径(`audio`:audio); 素材全信息JSON(`info`:json) |
+| 音色素材库 | `voice_asset_library` | 从云智AI配音音色库选择音色（记录音色ID），执行时回查音色详情并把试听样音复制到工作目录；输出素材路径与音色全信息 JSON。 | process | 来源(`any`:any) | 素材路径(试听音频)(`audio`:audio); 素材全信息JSON(`info`:json) |
+| 音频素材库 | `audio_asset_library` | 从 URL、本地路径或云智AI配音素材库（ID）获取音频素材，下载/复制到当前工作文件夹；输出素材路径与素材全信息 JSON。 | process | 来源(`any`:any) | 素材路径(`audio`:audio); 素材全信息JSON(`info`:json) |
 
 ### cutia（`cutia`）
 

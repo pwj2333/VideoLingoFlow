@@ -1,4 +1,8 @@
-# VideoLingoFlow
+# YunZhi AI
+
+> YunZhi AI is a customized distribution based on VideoLingoFlow for AI video creation, dubbing, subtitles, and workflow automation.
+
+Personal contact and original product links are removed from this distribution. The upstream attribution and CC BY-NC 4.0 terms remain in force; read [LICENSE](LICENSE) before redistribution or commercial use.
 
 > 🌐 Language / 语言：**English** · [简体中文](README.md)
 

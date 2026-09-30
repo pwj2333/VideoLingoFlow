@@ -20,7 +20,7 @@ pip install .
 ```python
 from qmhub import QmHubClient
 
-# base_url 默认 https://www.licorxj.online（前端转发 /api，无需暴露端口），可省略
+# base_url 从 QM_HUB_BASE_URL 读取，也可以在构造客户端时显式传入
 client = QmHubClient(
     api_key="cbk_xxxx",                 # 能力 Hub 创建的 API Key
 )

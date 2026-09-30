@@ -202,7 +202,7 @@ export default function SettingsPage() {
             </div>
             <div className="flex shrink-0 gap-2">
               <Button variant="outline" size="sm" asChild>
-                <a href="https://github.com/licorxj/QM-LocalRouter" target="_blank" rel="noreferrer"><Github className="h-3.5 w-3.5" />{t("settings.openRepository")}</a>
+                <a href="https://github.com/pwj2333/VideoLingoFlow" target="_blank" rel="noreferrer"><Github className="h-3.5 w-3.5" />{t("settings.openRepository")}</a>
               </Button>
               <Button size="sm" onClick={startRouterUpdate} disabled={updateRouterMut.isPending || updateStatus?.status === "updating"}>
                 {updateRouterMut.isPending || updateStatus?.status === "updating" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <GitPullRequest className="h-3.5 w-3.5" />}

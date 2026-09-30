@@ -249,7 +249,7 @@ def import_copy(source_root: Path, dry_run: bool = False):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="只读复制 LcVoiceForgeaApp 数据到晴沐配音谷")
+    parser = argparse.ArgumentParser(description="只读复制 LcVoiceForgeaApp 数据到云智AI配音")
     parser.add_argument("--source-root", required=True)
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--report")

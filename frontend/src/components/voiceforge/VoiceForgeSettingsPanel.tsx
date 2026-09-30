@@ -277,7 +277,7 @@ export function VoiceForgeSettingsPanel() {
       <PageHeader
         icon={SlidersHorizontal}
         title="配音谷设置"
-        detail="模型选择、Prompt 预设与合成导出参数，全部限定在晴沐配音谷内生效"
+        detail="模型选择、Prompt 预设与合成导出参数，全部限定在云智AI配音内生效"
         actions={
           <Button variant="outline" onClick={() => { void loadConfig(); void loadPresets(); void loadHealth(); }} disabled={cfgLoading}>
             <RefreshCcw className="mr-1.5 h-4 w-4" />刷新
@@ -386,7 +386,7 @@ export function VoiceForgeSettingsPanel() {
                 <Wand2 className="h-4 w-4 text-primary" />配音谷 Prompt 预设
               </h3>
               <p className="mt-1 text-xs text-muted-foreground">
-                仅作用于晴沐配音谷的 AI 能力；删除后对应能力自动回退到内置默认 Prompt。
+                仅作用于云智AI配音的 AI 能力；删除后对应能力自动回退到内置默认 Prompt。
               </p>
             </div>
             <Button size="sm" onClick={() => openEditor()}>

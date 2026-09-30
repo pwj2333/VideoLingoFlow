@@ -430,7 +430,7 @@ export default function UISettings() {
         />
         <ToggleRow
           icon={Mic2}
-          title="晴沐配音谷"
+          title="云智AI 配音"
           desc="AI 配音与音色合成工具"
           checked={navVoiceForge}
           onChange={applyNavVoiceForge}

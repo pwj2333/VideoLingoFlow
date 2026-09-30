@@ -1,4 +1,4 @@
-"""晴沐配音谷（VoiceForge）的 LLM Prompt 组装与默认参数集中管理。
+"""云智AI配音（VoiceForge）的 LLM Prompt 组装与默认参数集中管理。
 
 设计要点：
 1. Prompt 统一走 scope=voiceforge 的 Prompt 预设，用户可在「配音谷设置页」自行编辑；

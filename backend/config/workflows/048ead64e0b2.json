@@ -127,7 +127,7 @@
         "label": "QM虚拟邮箱",
         "config": {
           "mailbox_id": "4",
-          "target_email": "727909969@qq.com",
+          "target_email": "",
           "prefix_content": "测试转发："
         },
         "status": "completed",

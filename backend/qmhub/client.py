@@ -8,10 +8,11 @@ import time
 
 import json
 
+import os
 import requests
 
 # 生产环境域名（前端 nginx 将 /api 转发到后端，无需暴露端口）
-DEFAULT_BASE_URL = "https://www.licorxj.online"
+DEFAULT_BASE_URL = os.environ.get("QM_HUB_BASE_URL", "").strip()
 
 try:
     from .exceptions import (
@@ -48,10 +49,12 @@ class QmHubClient:
         Args:
             api_key: 能力 Hub 的 API Key（Bearer 认证，优先）
             username/password: 用户名密码（Basic 认证，备用）
-            base_url: 服务地址，默认 https://www.licorxj.online （前端转发 /api，无需端口）
+            base_url: 能力服务地址；未配置时由 QM_HUB_BASE_URL 提供
             timeout: 单次请求超时（秒）
         """
         self.base_url = (base_url or DEFAULT_BASE_URL).rstrip("/")
+        if not self.base_url:
+            raise ValueError("未配置能力服务地址，请设置 QM_HUB_BASE_URL")
         self.api_key = api_key
         self.username = username
         self.password = password

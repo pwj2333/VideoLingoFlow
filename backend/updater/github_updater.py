@@ -23,7 +23,7 @@ import uuid
 from pathlib import Path
 
 # 项目 GitHub 仓库地址（与前端 About 页一致）
-REPO_URL = "https://github.com/licorxj/VideoLingoFlow.git"
+REPO_URL = "https://github.com/pwj2333/VideoLingoFlow.git"
 
 # Windows 常见 Git 安装路径（shutil.which 找不到时回退）
 _WINDOWS_GIT_PATHS = (

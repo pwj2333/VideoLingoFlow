@@ -4,7 +4,7 @@
 示例：
     from qmhub import QmHubClient
 
-    client = QmHubClient(api_key="cbk_xxx")  # 默认 base_url=https://www.licorxj.online
+    client = QmHubClient(api_key="cbk_xxx")  # base_url 由 QM_HUB_BASE_URL 提供
 
     result = client.video_watermark.remove(
         video_url="https://example.com/video.mp4",
