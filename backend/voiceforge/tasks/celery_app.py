@@ -49,7 +49,7 @@ def celery_worker_available():
     if not celery_available() or Celery is None:
         return False
     try:
-        return bool(celery_app.control.ping(timeout=0.5))
+        return bool(celery_app.control.ping(timeout=3))
     except Exception:
         return False
 
