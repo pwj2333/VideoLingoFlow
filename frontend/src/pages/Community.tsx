@@ -9,7 +9,6 @@ import {
 import { getDeviceId } from "@/lib/deviceId";
 import { CATEGORIES } from "@/lib/workflowTypes";
 import { useAlert } from "@/components/ui/AlertProvider";
-import { useSubscriptionStore } from "@/stores/subscriptionStore";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -56,8 +55,6 @@ type TabKey = "all" | "node" | "workflow";
 
 export default function Community() {
   const { alert } = useAlert();
-  const subscriptionStatus = useSubscriptionStore((state) => state.status);
-  const fetchSubscriptionStatus = useSubscriptionStore((state) => state.fetchStatus);
   const deviceId = useMemo(() => getDeviceId(), []);
   const baseUrl = useMemo(() => getCommunityBaseUrl(), []);
 
@@ -89,18 +86,6 @@ export default function Community() {
   const [adminToken, setAdminToken] = useState<string>(() => loadStoredAdminToken());
   const [identityOpen, setIdentityOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const isSubscribed = subscriptionStatus?.user_type === "subscribed";
-
-  const requireSubscription = () => {
-    if (isSubscribed) return true;
-    alert("社区资源当前不可用，请检查服务配置。", "warning");
-    return false;
-  };
-
-  useEffect(() => {
-    if (!subscriptionStatus) fetchSubscriptionStatus();
-  }, [fetchSubscriptionStatus, subscriptionStatus]);
-
   const categories = useMemo(() => {
     if (tab === "node") return Object.entries(CATEGORIES).map(([value, meta]) => ({ value, label: meta.label }));
     if (tab === "workflow") return WORKFLOW_CATEGORIES.map((value) => ({ value, label: value }));
@@ -189,7 +174,6 @@ export default function Community() {
 
   /* ---------- 节点导入 ---------- */
   const startNodeImport = async () => {
-    if (!requireSubscription()) return;
     if (!baseUrl || !detail) return;
     setImporting(true);
     setRenameMode(false);
@@ -220,7 +204,6 @@ export default function Community() {
   };
 
   const confirmNodeImport = async () => {
-    if (!requireSubscription()) return;
     const { file, validation } = importState;
     if (!file) return;
     if (renameMode) {
@@ -256,7 +239,6 @@ export default function Community() {
 
   /* ---------- 工作流导入（由 WorkflowImportPanel 完成分析与安装） ---------- */
   const startWorkflowImport = async () => {
-    if (!requireSubscription()) return;
     if (!baseUrl || !detail) return;
     setRenameMode(false);
     setRenameTo("");
@@ -270,7 +252,6 @@ export default function Community() {
 
   /* ---------- 仅下载（不导入） ---------- */
   const handleDownloadOnly = async () => {
-    if (!requireSubscription()) return;
     if (!baseUrl || !detail) return;
     setDownloading(true);
     try {

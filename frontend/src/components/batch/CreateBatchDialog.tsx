@@ -4,8 +4,7 @@ import { cn } from "@/lib/utils";
 import { batchApi } from "@/api/batch";
 import { nativeFileDialog } from "@/api/files";
 import client from "@/api/client";
-import { getSubscriptionError, getQuotaExhaustedMessage, isSubscriptionBlocked, notifyQuotaExhausted } from "@/api/subscription";
-import { useSubscriptionStore } from "@/stores/subscriptionStore";
+import { getSubscriptionError } from "@/api/subscription";
 
 interface Props {
   onClose: () => void;
@@ -273,14 +272,6 @@ export default function CreateBatchDialog({ onClose, onCreated }: Props) {
       const taskCount = batchTypes.length > 0 ? nonEmptyPerType[batchTypes[0]].length : 0;
       const tasks: Record<string, string>[] = [];
 
-      const status = await useSubscriptionStore.getState().fetchStatus();
-      if (status && status.daily_limit !== null && (status.remaining_today || 0) < taskCount) {
-        notifyQuotaExhausted();
-        setValidationError(`今日剩余额度不足：需要 ${taskCount} 次，当前剩余 ${status.remaining_today || 0} 次。\n${getQuotaExhaustedMessage(status)}`);
-        setCreating(false);
-        return;
-      }
-
       for (let i = 0; i < taskCount; i++) {
         const task: Record<string, string> = {};
         for (const t of batchTypes) {
@@ -301,13 +292,7 @@ export default function CreateBatchDialog({ onClose, onCreated }: Props) {
       onCreated();
       onClose();
     } catch (e: any) {
-      if (isSubscriptionBlocked(e)) {
-        const status = useSubscriptionStore.getState().status;
-        notifyQuotaExhausted();
-        setValidationError(getQuotaExhaustedMessage(status));
-      } else {
-        setValidationError(getSubscriptionError(e) || "创建失败");
-      }
+      setValidationError(getSubscriptionError(e) || "创建失败");
     } finally {
       setCreating(false);
     }

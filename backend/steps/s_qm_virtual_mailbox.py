@@ -4,7 +4,7 @@
 作为邮件正文通过 qmhub 虚拟邮箱服务转发发送给已验证的转发目标（费用 2 分钱/封，云端处理）。
 
 Logic:
-  1. 通过 auth 组件验证用户已注册登录软件
+  1. 校验用户已自行配置能力服务密钥（capability.api_key）
   2. 读取选中的虚拟邮箱 ID
   3. 解析发送内容（文本框 prefix_content 与上游连线输入的文本串联）
   4. 读取选中的转发目标邮箱地址
@@ -41,17 +41,10 @@ class S_QmVirtualMailbox(BaseStep):
 
     @staticmethod
     def _check_user_auth() -> dict:
-        from backend.auth.cloud_auth_service import get_cloud_auth_service
+        """校验能力服务密钥已由用户配置（本地自用模式不绑定软件账号）。"""
+        from backend.qmhub.auth_helper import ensure_api_key
 
-        svc = get_cloud_auth_service()
-        session = svc.get_session() or {}
-        token = session.get("token") or ""
-        username = (session.get("user_info") or {}).get("username") or ""
-
-        if not token:
-            raise RuntimeError("节点需要注册登录软件")
-
-        return {"token": token, "username": username}
+        return {"token": ensure_api_key(), "username": "本地用户"}
 
     @staticmethod
     def _build_qmhub_client():
@@ -99,12 +92,12 @@ class S_QmVirtualMailbox(BaseStep):
         node_config = getattr(self, "_node_config", {}) or {}
         step_inputs = getattr(self, "_step_inputs", {}) or {}
 
-        # ========== 阶段 1：验证用户登录 ==========
+        # ========== 阶段 1：校验能力服务密钥 ==========
         if callback:
-            callback(5, "验证用户注册登录状态...")
-        auth_info = self._check_user_auth()
+            callback(5, "检查能力服务密钥配置...")
+        self._check_user_auth()
         if callback:
-            callback(10, f"用户已登录: {auth_info['username'] or '已认证'}")
+            callback(10, "能力服务密钥已配置")
 
         # ========== 阶段 2：读取选中的虚拟邮箱 ==========
         mailbox_id = str(node_config.get("mailbox_id", "")).strip()

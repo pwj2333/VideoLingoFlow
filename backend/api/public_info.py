@@ -1,11 +1,13 @@
-import asyncio
-import os
+"""公共信息接口（本地自用模式）。
 
+原版会向云端拉取版本更新与运营公告；本地自用模式不联网，公告恒为空，
+版本只报本地配置里的 version。GitHub Release 的更新检查另有入口
+（``/api/github-update``，见 backend/api/github_update.py），与账号无关。
+"""
 from fastapi import APIRouter, HTTPException
 
-from backend.auth.cloud_auth_service import SOFTWARE_CODE, get_cloud_auth_service
+from backend.auth.self_use_guard import SOFTWARE_CODE
 from backend.config.config_manager import config
-
 
 router = APIRouter(prefix="/api/public-info")
 
@@ -14,89 +16,33 @@ router = APIRouter(prefix="/api/public-info")
 # 保证顶栏角标、About 页与接口文档展示同一个版本号。
 APP_VERSION = str(config.get("version", "") or "2.0.0")
 
-# 云端版本信息中可能的下载地址字段（不同时期服务端字段名不一致，统一兼容）
-_DOWNLOAD_KEYS = ("update_url", "download_url", "downloadUrl", "url", "asset_url")
-
 
 def _local_version() -> str:
     """本地版本：优先取配置 version，缺省回退到程序内置版本。"""
     return str(config.get("version", "") or APP_VERSION)
 
 
-def _extract_download_url(update: dict | None) -> str:
-    if not isinstance(update, dict):
-        return ""
-    for key in _DOWNLOAD_KEYS:
-        value = update.get(key)
-        if isinstance(value, str) and value.strip():
-            return value.strip()
-    return ""
-
-
 @router.get("")
 async def get_public_info():
-    if os.getenv("YUNZHIAI_SELF_USE", "1") == "1":
-        return {"software_id": "yunzhiai", "local_version": _local_version(), "update": None, "announcements": [], "update_error": None, "announcement_error": None}
-    client = get_cloud_auth_service()._client
-    update_error = None
-    announcement_error = None
-    update = None
-    announcements = []
-
-    async def fetch_update():
-        try:
-            return client.check_update(SOFTWARE_CODE)
-        except Exception as exc:
-            nonlocal update_error
-            update_error = str(exc)
-            return None
-
-    async def fetch_announcements():
-        try:
-            latest = client.get_latest_announcements(SOFTWARE_CODE)
-            if not latest:
-                latest = client.get_announcements(limit=10)
-            return latest
-        except Exception as exc:
-            nonlocal announcement_error
-            announcement_error = str(exc)
-            return []
-
-    update, announcements = await asyncio.gather(fetch_update(), fetch_announcements())
-    if not isinstance(announcements, list):
-        announcements = []
     return {
         "software_id": SOFTWARE_CODE,
         "local_version": _local_version(),
-        "update": update,
-        "announcements": announcements,
-        "update_error": update_error,
-        "announcement_error": announcement_error,
+        "update": None,
+        "announcements": [],
+        "update_error": None,
+        "announcement_error": None,
     }
 
 
 @router.get("/announcements")
 async def get_announcements():
-    """仅获取项目公告（供「刷新公告」按钮使用，不涉及版本检查）。"""
-    if os.getenv("YUNZHIAI_SELF_USE", "1") == "1":
-        return {"announcements": [], "error": None}
-    client = get_cloud_auth_service()._client
-    try:
-        latest = client.get_latest_announcements(SOFTWARE_CODE)
-        if not latest:
-            latest = client.get_announcements(limit=10)
-        return {"announcements": latest if isinstance(latest, list) else [], "error": None}
-    except Exception as exc:
-        return {"announcements": [], "error": str(exc)}
+    """本地自用模式没有运营公告，恒返回空列表。"""
+    return {"announcements": [], "error": None}
 
 
 @router.get("/version")
 async def get_local_version():
-    """本地版本信息（不访问云端，供顶栏版本角标即时展示）。
-
-    与 /api/public-info 中的 local_version 同源，但不会触发云端更新检查与公告拉取，
-    因此可以在页面启动时无感调用。
-    """
+    """本地版本信息（不访问网络，供顶栏版本角标即时展示）。"""
     return {
         "version": _local_version(),
         "api_version": APP_VERSION,
@@ -106,18 +52,4 @@ async def get_local_version():
 
 @router.get("/download-url")
 async def get_download_url():
-    """从云端接口获取最新版本的下载地址（供前端「获取下载地址」按钮调用）。"""
-    if os.getenv("YUNZHIAI_SELF_USE", "1") == "1":
-        raise HTTPException(status_code=404, detail="本地自用模式不提供云端下载")
-    client = get_cloud_auth_service()._client
-    try:
-        update = client.check_update(SOFTWARE_CODE)
-    except Exception as exc:
-        raise HTTPException(status_code=502, detail=f"获取云端版本失败：{exc}")
-    url = _extract_download_url(update)
-    if not url:
-        raise HTTPException(status_code=404, detail="云端暂未提供下载地址")
-    return {
-        "version": (update or {}).get("version", ""),
-        "download_url": url,
-    }
+    raise HTTPException(status_code=404, detail="本地自用模式不提供云端下载，请从项目仓库自行获取")

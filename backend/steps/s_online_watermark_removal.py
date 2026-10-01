@@ -3,7 +3,7 @@
 调用配置的能力服务去除视频中的水印/字幕。
 
 Logic:
-  1. 通过 auth 组件验证用户已注册登录软件
+  1. 校验用户已自行配置能力服务密钥（capability.api_key）
   2. 读取上游 url_json，提取视频 URL、时长、尺寸
   3. 若配置了 resume_request_id，直接跳到轮询阶段；否则提交新任务
   4. 按「视频时长/10 和 5 秒的最大值」间隔轮询，超时为「视频时长×5 和 120 秒的最大值」
@@ -116,18 +116,10 @@ class S_OnlineWatermarkRemoval(BaseStep):
 
     @staticmethod
     def _check_user_auth() -> dict:
-        """通过 auth 组件验证用户已注册登录软件。返回登录信息。"""
-        from backend.auth.cloud_auth_service import get_cloud_auth_service
+        """校验能力服务密钥已由用户配置（本地自用模式不绑定软件账号）。"""
+        from backend.qmhub.auth_helper import ensure_api_key
 
-        svc = get_cloud_auth_service()
-        session = svc.get_session() or {}
-        token = session.get("token") or ""
-        username = (session.get("user_info") or {}).get("username") or ""
-
-        if not token:
-            raise RuntimeError("节点需要注册登录软件")
-
-        return {"token": token, "username": username}
+        return {"token": ensure_api_key(), "username": "本地用户"}
 
     @staticmethod
     def _build_qmhub_client():
@@ -722,12 +714,12 @@ class S_OnlineWatermarkRemoval(BaseStep):
             "error": None,
         }
 
-        # ========== 阶段 1：验证用户登录 ==========
+        # ========== 阶段 1：校验能力服务密钥 ==========
         if callback:
-            callback(2, "验证用户注册登录状态...")
-        auth_info = self._check_user_auth()
+            callback(2, "检查能力服务密钥配置...")
+        self._check_user_auth()
         if callback:
-            callback(5, f"用户已登录: {auth_info['username'] or '已认证'}")
+            callback(5, "能力服务密钥已配置")
 
         # 是否为「继续查询上次任务」模式（提前读取，便于后续阶段容错）
         # 支持两种值：

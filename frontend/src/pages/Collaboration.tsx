@@ -7,7 +7,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Switch } from "@/components/ui/switch";
 import { useAlert } from "@/components/ui/AlertProvider";
 import { useControlStore } from "@/stores/controlStore";
-import { useSubscriptionStore } from "@/stores/subscriptionStore";
 import { getLanMode, setLanMode, getRemoteMode, setRemoteMode, bootstrapAdmin } from "@/api/collaboration";
 import CollaborationOverview from "@/components/collaboration/CollaborationOverview";
 import ResourceCenter from "@/components/collaboration/ResourceCenter";
@@ -20,7 +19,7 @@ function isHostMachine(): boolean {
 }
 
 /* 顶栏右侧：局域网协作开关 */
-function LanModeSwitch({ isSubscribed }: { isSubscribed: boolean }) {
+function LanModeSwitch() {
   const { alert, confirm } = useAlert();
   const [enabled, setEnabled] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -36,10 +35,6 @@ function LanModeSwitch({ isSubscribed }: { isSubscribed: boolean }) {
   }, []);
 
   const handleToggle = async (value: boolean) => {
-    if (value && !isSubscribed) {
-      alert("多人协作当前不可用，请检查服务配置。", "warning");
-      return;
-    }
     if (!(await confirm(`确认${value ? "开启" : "关闭"}局域网协作？\n修改配置后需要重启管理器才能生效。`))) return;
     setBusy(true);
     try {
@@ -62,7 +57,7 @@ function LanModeSwitch({ isSubscribed }: { isSubscribed: boolean }) {
 }
 
 /* 顶栏右侧：远程网络协作开关 */
-function RemoteModeSwitch({ isSubscribed }: { isSubscribed: boolean }) {
+function RemoteModeSwitch() {
   const { alert, confirm } = useAlert();
   const [enabled, setEnabled] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -78,10 +73,6 @@ function RemoteModeSwitch({ isSubscribed }: { isSubscribed: boolean }) {
   }, []);
 
   const handleToggle = async (value: boolean) => {
-    if (value && !isSubscribed) {
-      alert("多人协作当前不可用，请检查服务配置。", "warning");
-      return;
-    }
     if (!(await confirm(value
       ? "确认开启远程网络协作？\n开启后公网域名（如 https://vlflow.licorai.dpdns.org）可访问本机，需配合 Cloudflare Tunnel。\n立即生效，无需重启。"
       : "确认关闭远程网络协作？\n关闭后公网域名立即无法访问本机（立即生效，无需重启）。"))) return;
@@ -167,22 +158,15 @@ function CloudGuideDialog({ open, onOpenChange }: { open: boolean; onOpenChange:
 
 export default function Collaboration() {
   const { user, roles, refreshSession } = useControlStore();
-  const subscriptionStatus = useSubscriptionStore((state) => state.status);
-  const fetchSubscriptionStatus = useSubscriptionStore((state) => state.fetchStatus);
   const [tab, setTab] = useState<"overview" | "resources">("overview");
   const [guideOpen, setGuideOpen] = useState(false);
   const isAdmin = roles.includes("admin");
   // 自动判断本机角色：主机（localhost/127.0.0.1 或管理员）→ 管理员，否则 → 协作组
   const youAre = isAdmin || isHostMachine() ? "管理员" : "协作组";
-  const isSubscribed = subscriptionStatus?.user_type === "subscribed";
 
   useEffect(() => {
     refreshSession();
   }, [refreshSession]);
-
-  useEffect(() => {
-    if (!subscriptionStatus) fetchSubscriptionStatus();
-  }, [fetchSubscriptionStatus, subscriptionStatus]);
 
   // 未注册时自动用默认账号初始化管理员，避免每次登录都提示"未注册"
   useEffect(() => {
@@ -206,8 +190,8 @@ export default function Collaboration() {
         detail="以本机为中心的局域网团队协作"
         actions={
           <>
-            <LanModeSwitch isSubscribed={isSubscribed} />
-            <RemoteModeSwitch isSubscribed={isSubscribed} />
+            <LanModeSwitch />
+            <RemoteModeSwitch />
           </>
         }
       />

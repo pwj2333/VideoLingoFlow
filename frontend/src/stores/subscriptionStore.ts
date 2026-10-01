@@ -1,46 +1,23 @@
+/**
+ * 本地状态 store（本地自用模式）。
+ *
+ * 原先这里有登录/注册/验码/领额度等一整套付费流程，现已全部移除：
+ * 本地自用模式下后端恒返回「已登录 + 不限量」，只需要一个只读状态供界面展示。
+ */
 import { create } from "zustand";
-import { subscriptionApi, getSubscriptionError, type LoginPayload, type RegisterPayload, type ResetPasswordPayload, type SubscriptionStatus } from "@/api/subscription";
+import { subscriptionApi, getSubscriptionError, type SubscriptionStatus } from "@/api/subscription";
 
 interface SubscriptionState {
   status: SubscriptionStatus | null;
   loading: boolean;
   error: string;
   fetchStatus: () => Promise<SubscriptionStatus | null>;
-  tryAutoLogin: () => Promise<boolean>;
-  refresh: () => Promise<SubscriptionStatus | null>;
-  login: (payload: LoginPayload) => Promise<SubscriptionStatus>;
-  logout: () => Promise<void>;
-  unbindDevice: () => Promise<SubscriptionStatus>;
-  register: (payload: RegisterPayload) => Promise<any>;
-  sendCode: (email: string) => Promise<any>;
-  sendResetCode: (email: string) => Promise<any>;
-  resetPassword: (payload: ResetPasswordPayload) => Promise<any>;
-  verifyCard: (cardCode: string) => Promise<SubscriptionStatus>;
-  claimQuota: () => Promise<{ ok: boolean; message?: string; state?: SubscriptionStatus }>;
 }
 
 export const useSubscriptionStore = create<SubscriptionState>((set) => ({
   status: null,
   loading: false,
   error: "",
-  tryAutoLogin: async () => {
-    try {
-      const rememberEnabled = localStorage.getItem("vl_subscription_remember_enabled") === "true";
-      const rememberPasswordEnabled = localStorage.getItem("vl_subscription_remember_password_enabled") === "true";
-      const autoLoginEnabled = localStorage.getItem("vl_subscription_auto_login_enabled") === "true";
-      if (!(rememberPasswordEnabled || autoLoginEnabled)) return false;
-      const username = (localStorage.getItem("vl_subscription_remember_username") || "").trim();
-      const password = localStorage.getItem("vl_subscription_remember_password") || "";
-      if (!username || !password) return false;
-      const status = await subscriptionApi.login({ username, password });
-      set({ status });
-      return true;
-    } catch (error: any) {
-      const message = getSubscriptionError(error);
-      set({ error: message });
-      return false;
-    }
-  },
   fetchStatus: async () => {
     set({ loading: true, error: "" });
     try {
@@ -48,130 +25,8 @@ export const useSubscriptionStore = create<SubscriptionState>((set) => ({
       set({ status, loading: false });
       return status;
     } catch (error: any) {
-      const message = getSubscriptionError(error);
-      set({ error: message, loading: false });
+      set({ error: getSubscriptionError(error), loading: false });
       return null;
-    }
-  },
-  refresh: async () => {
-    set({ loading: true, error: "" });
-    try {
-      const status = await subscriptionApi.refresh();
-      set({ status, loading: false });
-      return status;
-    } catch (error: any) {
-      const message = getSubscriptionError(error);
-      set({ error: message, loading: false });
-      return null;
-    }
-  },
-  login: async (payload) => {
-    set({ loading: true, error: "" });
-    try {
-      const status = await subscriptionApi.login(payload);
-      set({ status, loading: false });
-      return status;
-    } catch (error: any) {
-      const message = getSubscriptionError(error);
-      set({ error: message, loading: false });
-      throw error;
-    }
-  },
-  logout: async () => {
-    set({ loading: true, error: "" });
-    try {
-      await subscriptionApi.logout();
-      const status = await subscriptionApi.getStatus();
-      set({ status, loading: false });
-    } catch (error: any) {
-      const message = getSubscriptionError(error);
-      set({ error: message, loading: false });
-      throw error;
-    }
-  },
-  unbindDevice: async () => {
-    set({ loading: true, error: "" });
-    try {
-      const status = await subscriptionApi.unbindDevice();
-      set({ status, loading: false });
-      return status;
-    } catch (error: any) {
-      const message = getSubscriptionError(error);
-      set({ error: message, loading: false });
-      throw error;
-    }
-  },
-  register: async (payload) => {
-    set({ loading: true, error: "" });
-    try {
-      const result = await subscriptionApi.register(payload);
-      set({ loading: false });
-      return result;
-    } catch (error: any) {
-      const message = getSubscriptionError(error);
-      set({ error: message, loading: false });
-      throw error;
-    }
-  },
-  sendCode: async (email) => {
-    set({ loading: true, error: "" });
-    try {
-      const result = await subscriptionApi.sendCode(email);
-      set({ loading: false });
-      return result;
-    } catch (error: any) {
-      const message = getSubscriptionError(error);
-      set({ error: message, loading: false });
-      throw error;
-    }
-  },
-  sendResetCode: async (email) => {
-    set({ loading: true, error: "" });
-    try {
-      const result = await subscriptionApi.sendResetCode(email);
-      set({ loading: false });
-      return result;
-    } catch (error: any) {
-      const message = getSubscriptionError(error);
-      set({ error: message, loading: false });
-      throw error;
-    }
-  },
-  resetPassword: async (payload) => {
-    set({ loading: true, error: "" });
-    try {
-      const result = await subscriptionApi.resetPassword(payload);
-      set({ loading: false });
-      return result;
-    } catch (error: any) {
-      const message = getSubscriptionError(error);
-      set({ error: message, loading: false });
-      throw error;
-    }
-  },
-  verifyCard: async (cardCode) => {
-    set({ loading: true, error: "" });
-    try {
-      const status = await subscriptionApi.verifyCard(cardCode);
-      set({ status, loading: false });
-      return status;
-    } catch (error: any) {
-      const message = getSubscriptionError(error);
-      set({ error: message, loading: false });
-      throw error;
-    }
-  },
-  claimQuota: async () => {
-    set({ loading: true, error: "" });
-    try {
-      const result = await subscriptionApi.claimQuota();
-      if (result?.state) set({ status: result.state, loading: false });
-      else set({ loading: false });
-      return result;
-    } catch (error: any) {
-      const message = getSubscriptionError(error);
-      set({ error: message, loading: false });
-      throw error;
     }
   },
 }));

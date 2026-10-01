@@ -7,8 +7,6 @@ import CreateBatchDialog from "@/components/batch/CreateBatchDialog";
 import BatchGroupCard from "@/components/batch/BatchGroupCard";
 import BatchRuntimePanel from "@/components/batch/BatchRuntimePanel";
 import { useAlert } from "@/components/ui/AlertProvider";
-import { getSubscriptionError, isDeviceLimitError, isSubscriptionBlocked, getQuotaExhaustedMessage, notifyQuotaExhausted } from "@/api/subscription";
-import { useSubscriptionStore } from "@/stores/subscriptionStore";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { PageBackground } from "@/components/shared/PageBackground";
@@ -182,41 +180,16 @@ export default function BatchWorkshop() {
     }
   };
 
-  const handleSubscriptionError = (e: any) => {
-    if (!isSubscriptionBlocked(e)) return false;
-    if (isDeviceLimitError(e)) {
-      showAlert(getSubscriptionError(e), "warning");
-      return true;
-    }
-    const status = useSubscriptionStore.getState().status;
-    notifyQuotaExhausted();
-    showAlert(getQuotaExhaustedMessage(status), "warning");
-    return true;
-  };
-
   const handleOpenCreateDialog = async () => {
-    const status = await useSubscriptionStore.getState().fetchStatus();
-    if (status && !status.can_create_task) {
-      notifyQuotaExhausted();
-      showAlert(getQuotaExhaustedMessage(status), "warning");
-      return;
-    }
     setShowCreateDialog(true);
   };
 
   const handleResumeUnfinished = async () => {
     setLoading(true);
     try {
-      const status = await useSubscriptionStore.getState().fetchStatus();
-      if (status && !status.can_create_task) {
-        notifyQuotaExhausted();
-        showAlert(getQuotaExhaustedMessage(status), "warning");
-        return;
-      }
       await batchApi.resumeAllUnfinished();
       await loadBatches();
     } catch (e: any) {
-      if (handleSubscriptionError(e)) return;
       showAlert(e?.response?.data?.detail || "操作失败");
     } finally {
       setLoading(false);

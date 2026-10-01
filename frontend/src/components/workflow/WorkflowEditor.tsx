@@ -31,8 +31,6 @@ import { buildGroupNode, createNodeDataFromType, expandGroupNodesForExecution, g
 import { buildLoopNode, ungroupLoopNode } from "@/lib/loopWorkflow";
 import { useProjectStore } from "@/stores/projectStore";
 import { useControlStore } from "@/stores/controlStore";
-import { getSubscriptionError, isDeviceLimitError, isSubscriptionBlocked, getQuotaExhaustedMessage, notifyQuotaExhausted } from "@/api/subscription";
-import { useSubscriptionStore } from "@/stores/subscriptionStore";
 import ExecutionModeModal, { type ExecutionMode } from "./ExecutionModeModal";
 import { createNodeType } from "@/api/nodeTypes";
 
@@ -397,28 +395,6 @@ export default function WorkflowEditor({ workflowId, taskId, onExecute }: Props)
   const [deleteGroupAction, setDeleteGroupAction] = useState<"delete" | "dissolve" | null>(null);
   const [groupBusy, setGroupBusy] = useState(false);
   const [moveTarget, setMoveTarget] = useState<SavedWorkflow | null>(null); // 待分配分组的工作流
-
-  const ensureTaskAllowed = useCallback(async () => {
-    const status = await useSubscriptionStore.getState().fetchStatus();
-    if (status && !status.can_create_task) {
-      notifyQuotaExhausted();
-      alert(getQuotaExhaustedMessage(status));
-      return false;
-    }
-    return true;
-  }, []);
-
-  const handleSubscriptionError = useCallback((err: any) => {
-    if (!isSubscriptionBlocked(err)) return false;
-    if (isDeviceLimitError(err)) {
-      alert(getSubscriptionError(err));
-      return true;
-    }
-    const status = useSubscriptionStore.getState().status;
-    notifyQuotaExhausted();
-    alert(getQuotaExhaustedMessage(status));
-    return true;
-  }, []);
 
   // 连线随机颜色
   const EDGE_COLORS = ["#6366f1", "#22d3ee", "#a78bfa", "#34d399", "#fb923c", "#f472b6", "#60a5fa", "#facc15"];
@@ -1559,7 +1535,6 @@ export default function WorkflowEditor({ workflowId, taskId, onExecute }: Props)
       return;
     }
 
-    if (!(await ensureTaskAllowed())) return;
 
     let wfId = currentWfId;
     if (!wfId) {
@@ -1603,13 +1578,11 @@ export default function WorkflowEditor({ workflowId, taskId, onExecute }: Props)
       }
     } catch (err) {
       setExecutingNode(null);
-      if (handleSubscriptionError(err)) return;
       alert("执行失败: " + (err as Error).message);
     }
   };
 
   const handleExecuteFromNode = async (nodeId: string) => {
-    if (!(await ensureTaskAllowed())) return;
 
     let wfId = currentWfId;
     if (!wfId) {
@@ -1657,7 +1630,6 @@ export default function WorkflowEditor({ workflowId, taskId, onExecute }: Props)
       console.error("Execute from node failed:", err);
       setExecuting(false);
       setCancelling(false);
-      handleSubscriptionError(err);
     }
   };
 
@@ -1669,7 +1641,6 @@ export default function WorkflowEditor({ workflowId, taskId, onExecute }: Props)
     const expanded = expandGroupNodesForExecution({ nodes: latestNodes as WorkflowNode[], edges: latestEdges as WorkflowEdge[] });
     if (latestNodes.length === 0) return;
 
-    if (!(await ensureTaskAllowed())) return;
 
     // Find input node config
     const inputNode = latestNodes.find((n: any) => n.data?.nodeType === "input");
@@ -1706,8 +1677,7 @@ export default function WorkflowEditor({ workflowId, taskId, onExecute }: Props)
         console.error("New task creation failed:", err);
         setExecuting(false);
         setCancelling(false);
-        handleSubscriptionError(err);
-      }
+        }
       return;
     }
 
@@ -1740,7 +1710,6 @@ export default function WorkflowEditor({ workflowId, taskId, onExecute }: Props)
       console.error("Execute failed:", err);
       setExecuting(false);
       setCancelling(false);
-      handleSubscriptionError(err);
     }
   };
 

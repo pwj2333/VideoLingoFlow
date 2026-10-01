@@ -228,7 +228,7 @@ class S_MediaToUrl(BaseStep):
         Returns:
             upload_result dict（含 url / meta_data 等）
         """
-        from backend.auth.cloud_auth_service import upload_to_tencent_vod_with_details
+        from backend.utils.tencent_vod import upload_to_tencent_vod_with_details
         import time
         import threading
 

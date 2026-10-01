@@ -197,7 +197,7 @@ app.include_router(musicgen_interfaces.router, prefix="/api/musicgen-interfaces"
 app.include_router(separation_interfaces.router, prefix="/api/separation-interfaces", tags=["separation-interfaces"])
 app.include_router(ocr_interfaces.router, prefix="/api/ocr-interfaces", tags=["ocr-interfaces"])
 app.include_router(publish.router, prefix="/api/publish", tags=["publish"])
-app.include_router(subscription.self_use_router if os.getenv("YUNZHIAI_SELF_USE", "1") == "1" else subscription.router, prefix="/api/subscription", tags=["subscription"])
+app.include_router(subscription.router, prefix="/api/subscription", tags=["subscription"])
 app.include_router(public_info.router, tags=["public-info"])
 app.include_router(github_update.router, tags=["github-update"])
 app.include_router(control_plane.router, prefix="/api/control", tags=["control-plane"])
@@ -486,10 +486,11 @@ async def startup_event():
     start_project_drainer()
     print("VoiceForge project progress drainer started")
 
-    # 启动时后台拉取云端加密配置，覆盖每日用量限额（失败时保持预设兜底值）
-    from backend.auth.subscription_guard import start_limits_refresh
-    start_limits_refresh()
-    print("Subscription limits refresh scheduled")
+    # 本地自用模式：确保存在可登录的本地账号（默认 admin / admin123456，
+    # 可用 YUNZHIAI_LOCAL_USER / YUNZHIAI_LOCAL_PASSWORD 覆盖）。已存在时不改密码。
+    from backend.auth.local_account import ensure_local_admin
+    _account = ensure_local_admin()
+    print(f"Local account ready: {_account['username']}" + ("（已创建默认管理员，请尽快改密）" if _account["created"] else ""))
 
     # 可选：API 启动时回收卡死任务（默认关闭，见 CONTROL_PLANE_RECOVERY_ON_API_START）。
     # 正常情况由 Celery worker 的 worker_ready 钩子回收；只有确认「worker 已不在运行、

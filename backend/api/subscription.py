@@ -1,163 +1,42 @@
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
+"""订阅接口（本地自用模式）。
 
-from backend.auth.cloud_auth_service import get_cloud_auth_service
+付费相关接口（注册、找回密码、卡密验证、领取额度、设备绑定、购买链接）已全部移除。
+这里只保留前端仍在调用的几个只读/无副作用入口，避免老前端构建产物 404：
+
+- ``GET  /api/subscription/status``       本地状态：恒为已登录、不限量
+- ``POST /api/subscription/refresh``      同 status（本地无云端可刷新）
+- ``POST /api/subscription/quota-notice`` 本地不限量，恒不写通知
+- ``GET  /api/subscription/links``        指向本项目仓库，不是购买页
+
+账号登录/登出/改密统一走 ``/api/control/auth/*``（本地用户名密码，见 backend/api/control_plane.py）。
+"""
+from fastapi import APIRouter
+
 from backend.auth.subscription_guard import get_subscription_guard
-from backend.utils.quota_notice import notify_quota_exhausted
-
 
 router = APIRouter()
-self_use_router = APIRouter()
+# 兼容旧的装配方式：本地自用模式下两个名字指向同一个路由器
+self_use_router = router
 
-
-@self_use_router.get("/status")
-async def self_use_status():
-    return get_subscription_guard().get_subscription_state()
-
-
-@self_use_router.post("/quota-notice")
-async def self_use_quota_notice():
-    return {"notified": False, "state": get_subscription_guard().get_subscription_state()}
-
-
-class LoginRequest(BaseModel):
-    username: str
-    password: str
-
-
-class RegisterRequest(BaseModel):
-    username: str
-    password: str
-    email: str
-    phone: str | None = None
-    verification_code: str | None = None
-
-
-class EmailRequest(BaseModel):
-    email: str
-
-
-class ResetPasswordRequest(BaseModel):
-    email: str
-    code: str
-    new_password: str
-
-
-class CardRequest(BaseModel):
-    card_code: str = Field(default="")
-
-
-def _raise_if_failed(result: dict):
-    if not result.get("ok"):
-        code = result.get("code")
-        status_code = 401 if code in {1100, 1101, 1102} else 403 if code in {1103, 1203, 1205, 1206, 1207, 1302, 2001, 2002, 2003} else 402 if code == 1209 else 503 if isinstance(code, int) and 4000 <= code <= 4999 else 400
-        raise HTTPException(status_code=status_code, detail=result.get("message") or "操作失败")
-    return result
+_REPO = "https://github.com/pwj2333/VideoLingoFlow"
 
 
 @router.get("/status")
 async def get_status():
-    guard = get_subscription_guard()
-    return guard.get_subscription_state(force_refresh=False)
+    return get_subscription_guard().get_subscription_state()
 
 
 @router.post("/refresh")
 async def refresh_status():
-    service = get_cloud_auth_service()
-    _raise_if_failed(service.refresh())
-    guard = get_subscription_guard()
-    return guard.get_subscription_state(force_refresh=False)
-
-
-@router.post("/login")
-async def login(req: LoginRequest):
-    service = get_cloud_auth_service()
-    _raise_if_failed(service.login(req.username, req.password))
-    guard = get_subscription_guard()
-    guard.recover_usage()
-    # 登录（含前端「自动登录」）后，非订阅用户自动领取当天免费额度：
-    # 这样节点执行期无需再联网领额度（r3 §5），也消除"今日剩余 0 却显示可执行"的矛盾。
-    guard.claim_quota()
-    return guard.get_subscription_state(force_refresh=False)
-
-
-@router.post("/claim-quota")
-async def claim_quota():
-    """领取当天免费额度（前端「领取额度」按钮的兜底入口）。
-
-    订阅用户无需领取；离线或云端拒绝时返回 ok=False 与原因，不作为错误抛出。
-    """
-    guard = get_subscription_guard()
-    return guard.claim_quota()
-
-
-@router.post("/logout")
-async def logout():
-    service = get_cloud_auth_service()
-    return service.logout()
-
-
-@router.post("/unbind-device")
-async def unbind_device():
-    service = get_cloud_auth_service()
-    _raise_if_failed(service.unbind_device())
-    guard = get_subscription_guard()
-    return guard.get_subscription_state(force_refresh=False)
-
-
-@router.post("/register")
-async def register(req: RegisterRequest):
-    service = get_cloud_auth_service()
-    return _raise_if_failed(service.register(req.username, req.password, req.email, req.phone, req.verification_code))
-
-
-@router.post("/send-code")
-async def send_code(req: EmailRequest):
-    service = get_cloud_auth_service()
-    return _raise_if_failed(service.send_verification_code(req.email))
-
-
-@router.post("/reset-password/send-code")
-async def send_reset_code(req: EmailRequest):
-    service = get_cloud_auth_service()
-    return _raise_if_failed(service.send_reset_password_code(req.email))
-
-
-@router.post("/reset-password/confirm")
-async def reset_password(req: ResetPasswordRequest):
-    service = get_cloud_auth_service()
-    return _raise_if_failed(service.reset_password(req.email, req.code, req.new_password))
-
-
-@router.post("/verify-card")
-async def verify_card(req: CardRequest):
-    if not req.card_code.strip():
-        raise HTTPException(status_code=400, detail="请输入卡密")
-    service = get_cloud_auth_service()
-    _raise_if_failed(service.verify_card_advanced(req.card_code.strip()))
-    guard = get_subscription_guard()
-    guard.recover_usage()
-    return guard.get_subscription_state(force_refresh=True)
+    return get_subscription_guard().get_subscription_state()
 
 
 @router.post("/quota-notice")
 async def quota_notice():
-    """额度不足时写入一条系统通知（供前端本地预校验拦截时调用）。
-
-    额度充足时不做任何事，保证前端无法凭空制造「额度已用完」的提醒。
-    通知按天去重，同一天只提醒一次。
-    """
-    guard = get_subscription_guard()
-    state = guard.get_subscription_state(force_refresh=False)
-    if state.get("can_execute_node"):
-        return {"notified": False, "state": state}
-    return {"notified": notify_quota_exhausted(state), "state": state}
+    """本地自用模式不限额度，永远不写「额度已用完」通知。"""
+    return {"notified": False, "state": get_subscription_guard().get_subscription_state()}
 
 
 @router.get("/links")
 async def get_links():
-    return {
-        "products": "https://github.com/pwj2333/VideoLingoFlow",
-        "home": "https://github.com/pwj2333/VideoLingoFlow",
-        "versions": "https://github.com/pwj2333/VideoLingoFlow/releases",
-    }
+    return {"products": _REPO, "home": _REPO, "versions": f"{_REPO}/releases"}
