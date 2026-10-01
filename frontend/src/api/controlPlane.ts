@@ -76,7 +76,8 @@ export async function logoutControlSession() {
  * 产物与镜像，等于公开管理员凭据。
  */
 export async function ensureControlSession(): Promise<ControlUser | null> {
-  return restoreLocalControlSession().catch(() => null);
+  const existing = await getControlSession().catch(() => null);
+  return existing ?? restoreLocalControlSession().catch(() => null);
 }
 
 export async function listControlProjects(): Promise<ControlProject[]> {

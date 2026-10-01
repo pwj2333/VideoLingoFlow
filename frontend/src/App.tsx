@@ -91,7 +91,7 @@ function applyUISettings() {
 export default function App() {
   // 免密会话建立失败时要求手动登录：容器化/公网访问下来源不是环回地址，
   // local-session 返回 403，缺少登录入口会导致所有接口 401、界面看着「跑不动」。
-  const [needLogin, setNeedLogin] = useState(false);
+  const [authState, setAuthState] = useState<"checking" | "login" | "ready">("checking");
 
   useEffect(() => {
     applyUISettings();
@@ -99,24 +99,24 @@ export default function App() {
     ensureControlSession()
       .then((user) => {
         if (user) useControlStore.getState().setUser(user);
-        else setNeedLogin(true);
+        setAuthState(user ? "ready" : "login");
       })
-      .catch(() => setNeedLogin(true));
+      .catch(() => setAuthState("login"));
     useSubscriptionStore.getState().fetchStatus().catch(() => undefined);
   }, []);
 
   const handleLoggedIn = (user: ControlUser) => {
     useControlStore.getState().setUser(user);
-    setNeedLogin(false);
+    setAuthState("ready");
     // 登录前拿不到数据的页面需要重新取一次状态
     useSubscriptionStore.getState().fetchStatus().catch(() => undefined);
   };
 
   return (
     <AlertProvider>
-      {needLogin && <LocalLoginDialog onSuccess={handleLoggedIn} />}
-      <WelcomeModal />
-      <Routes>
+      {authState === "login" && <LocalLoginDialog onSuccess={handleLoggedIn} />}
+      {authState === "ready" && <WelcomeModal />}
+      {authState === "ready" && <Routes>
         <Route element={<AppLayout />}>
           <Route path="/" element={<Workbench />} />
           <Route path="/batch" element={<BatchWorkshop />} />
@@ -142,7 +142,7 @@ export default function App() {
           <Route path="/community" element={<Community />} />
           <Route path="/guide" element={<Guide />} />
         </Route>
-      </Routes>
+      </Routes>}
     </AlertProvider>
   );
 }
