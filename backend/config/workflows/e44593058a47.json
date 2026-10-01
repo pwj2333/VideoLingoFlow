@@ -1,0 +1,30 @@
+{
+  "id": "e44593058a47",
+  "name": "本地执行测试",
+  "description": "",
+  "nodes": [
+    {
+      "id": "n1",
+      "type": "workflow",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "data": {
+        "nodeType": "input",
+        "config": {
+          "input_type": "text",
+          "text": "hello world",
+          "filePath": "",
+          "source_language": "auto",
+          "target_language": "zh",
+          "copyInputs": true
+        }
+      }
+    }
+  ],
+  "edges": [],
+  "type": "user",
+  "createdAt": "2026-10-01T22:52:52",
+  "updatedAt": "2026-10-01T22:52:52"
+}
