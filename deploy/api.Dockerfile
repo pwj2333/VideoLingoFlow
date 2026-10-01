@@ -55,6 +55,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # 业务依赖 `python -m yt_dlp` 等子进程调用，确保 `python` 命令存在
 RUN ln -sf /usr/local/bin/python3 /usr/local/bin/python
 
+# yt-dlp uses Node.js to solve YouTube's JavaScript challenges.
+COPY --from=frontend /usr/local/bin/node /usr/local/bin/node
+
 # 复制依赖清单
 COPY backend/requirements.txt backend/requirements-voiceforge.txt /app/backend/
 

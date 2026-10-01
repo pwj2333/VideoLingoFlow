@@ -128,7 +128,6 @@ class S00PlatformDownload(BaseStep):
             "-P", video_download_dir,
             "--print", "after_move:VLDL\t%(title)s\t%(filepath)s",
             "--js-runtimes", js_runtime,
-            "--remote-components", "ejs:github",
             "--extractor-args", "youtube:player_client=web_embedded",
         ]
 
@@ -162,27 +161,6 @@ class S00PlatformDownload(BaseStep):
             cmd.extend(["--cookies", cookie_file])
 
         cmd.append(url)
-
-        print("[S00] Updating yt-dlp...")
-        if callback:
-            callback(5, "Updating yt-dlp...")
-
-        # Update yt-dlp first (20s timeout)
-        try:
-            update_result = subprocess.run(
-                [sys.executable, "-m", "yt_dlp", "-U"],
-                capture_output=True, text=True, timeout=20
-            )
-            status = "updated" if update_result.returncode == 0 else "skipped"
-            print(f"[S00] yt-dlp update: {status}")
-            if callback:
-                callback(8, f"yt-dlp {status}")
-        except subprocess.TimeoutExpired:
-            print("[S00] yt-dlp update timeout, continuing...")
-            if callback:
-                callback(8, "yt-dlp update timeout, continuing...")
-        except Exception:
-            pass
 
         print(f"[S00] Command: {' '.join(cmd[:8])}...")
         print("[S00] Downloading...")
