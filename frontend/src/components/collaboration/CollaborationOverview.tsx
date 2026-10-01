@@ -158,7 +158,7 @@ function AdminCard() {
   const { alert } = useAlert();
   const { user, refreshSession } = useControlStore();
   const [username, setUsername] = useState("admin");
-  const [password, setPassword] = useState("admin123456");
+  const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [credOpen, setCredOpen] = useState(false);
   const [credForm, setCredForm] = useState({ current_password: "", new_username: "", new_password: "" });
@@ -207,7 +207,7 @@ function AdminCard() {
       <CardHeader className="pb-1.5">
         <CardTitle className="flex items-center gap-2 text-base"><ShieldCheck className="h-4 w-4 text-primary" />管理员</CardTitle>
         <CardDescription>
-          {user ? `当前账号：${user.display_name || user.username}` : "默认账号 admin / admin123456（登录后可自行修改）"}
+          {user ? `当前账号：${user.display_name || user.username}` : "请使用本地管理员账号登录（登录后可修改用户名与密码）"}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-2">

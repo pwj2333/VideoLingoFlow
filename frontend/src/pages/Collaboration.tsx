@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Switch } from "@/components/ui/switch";
 import { useAlert } from "@/components/ui/AlertProvider";
 import { useControlStore } from "@/stores/controlStore";
-import { getLanMode, setLanMode, getRemoteMode, setRemoteMode, bootstrapAdmin } from "@/api/collaboration";
+import { getLanMode, setLanMode, getRemoteMode, setRemoteMode } from "@/api/collaboration";
 import CollaborationOverview from "@/components/collaboration/CollaborationOverview";
 import ResourceCenter from "@/components/collaboration/ResourceCenter";
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -168,14 +168,9 @@ export default function Collaboration() {
     refreshSession();
   }, [refreshSession]);
 
-  // 未注册时自动用默认账号初始化管理员，避免每次登录都提示"未注册"
-  useEffect(() => {
-    if (!user) {
-      bootstrapAdmin({ username: "admin", password: "admin123456" }).catch(() => {
-        /* 已初始化（409）或网络错误时静默忽略 */
-      });
-    }
-  }, [user]);
+  // 本地管理员由后端启动时播种（backend/auth/local_account.py），
+  // 前端不再用默认账号调 bootstrap：账号必然已存在（接口只会返回 409），
+  // 且把默认密码写进前端会被打进公开的 JS 产物与镜像。
 
   const tabs = [
     { key: "overview" as const, label: "协作总览", icon: LayoutDashboard },

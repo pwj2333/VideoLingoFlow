@@ -1,11 +1,12 @@
-import { lazy, useEffect, type ComponentType } from "react";
+import { lazy, useEffect, useState, type ComponentType } from "react";
 import { Routes, Route } from "react-router-dom";
 import AlertProvider from "./components/ui/AlertProvider";
 import WelcomeModal from "./components/ui/WelcomeModal";
 import AppLayout from "./components/layout/AppLayout";
 // Workbench 是默认落地页，保持同步加载，避免首屏空窗
 import Workbench from "./pages/Workbench";
-import { ensureControlSession } from "./api/controlPlane";
+import { ensureControlSession, type ControlUser } from "./api/controlPlane";
+import LocalLoginDialog from "./components/LocalLoginDialog";
 import { useControlStore } from "./stores/controlStore";
 import { useSubscriptionStore } from "./stores/subscriptionStore";
 
@@ -88,19 +89,32 @@ function applyUISettings() {
 }
 
 export default function App() {
+  // 免密会话建立失败时要求手动登录：容器化/公网访问下来源不是环回地址，
+  // local-session 返回 403，缺少登录入口会导致所有接口 401、界面看着「跑不动」。
+  const [needLogin, setNeedLogin] = useState(false);
+
   useEffect(() => {
     applyUISettings();
     // 启动期确保控制面会话：环回自动登录，未初始化则自动 bootstrap 默认管理员
     ensureControlSession()
       .then((user) => {
         if (user) useControlStore.getState().setUser(user);
+        else setNeedLogin(true);
       })
-      .catch(() => undefined);
+      .catch(() => setNeedLogin(true));
     useSubscriptionStore.getState().fetchStatus().catch(() => undefined);
   }, []);
 
+  const handleLoggedIn = (user: ControlUser) => {
+    useControlStore.getState().setUser(user);
+    setNeedLogin(false);
+    // 登录前拿不到数据的页面需要重新取一次状态
+    useSubscriptionStore.getState().fetchStatus().catch(() => undefined);
+  };
+
   return (
     <AlertProvider>
+      {needLogin && <LocalLoginDialog onSuccess={handleLoggedIn} />}
       <WelcomeModal />
       <Routes>
         <Route element={<AppLayout />}>

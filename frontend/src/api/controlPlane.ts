@@ -66,20 +66,16 @@ export async function logoutControlSession() {
 }
 
 /**
- * 启动期确保存在一个可用的控制面会话：
- * 1) 优先尝试环回地址自动登录（local-session，无需密码）；
- * 2) 若后端尚未初始化管理员（local-session 返回 409 bootstrap_required），
- *    则用默认账号自动 bootstrap，然后再次建立本地会话。
- * 这样任意页面（不局限于多人协作页）首次打开都能直接通信，无需手动登录。
+ * 启动期尝试免密建立控制面会话（local-session，仅环回地址可用）。
+ *
+ * 本机直接运行时这条路径会成功，页面无需手动登录。容器化部署或从公网访问时
+ * 来源不是环回地址，后端返回 403，这里返回 null，由 App 弹出登录框要求输入密码。
+ *
+ * 不在此处用默认账号调 bootstrap/login：账号已由后端启动时播种
+ * （backend/auth/local_account.py），且把默认密码写进前端会被打进公开的 JS
+ * 产物与镜像，等于公开管理员凭据。
  */
 export async function ensureControlSession(): Promise<ControlUser | null> {
-  const existing = await restoreLocalControlSession().catch(() => null);
-  if (existing) return existing;
-  try {
-    await client.post("/api/control/auth/bootstrap", { username: "admin", password: "admin123456" });
-  } catch {
-    /* 已初始化（409）或网络错误时静默忽略 */
-  }
   return restoreLocalControlSession().catch(() => null);
 }
 
