@@ -104,9 +104,11 @@ services:
     ports:
       - "${API_PORT:-11001}:11001"
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:11001/api/health/ready', timeout=3)"]
+      # /api/health/ready 实测稳定耗时 7-8 秒（redis/celery/控制面/文件系统逐项检查累加），
+      # 原 3 秒请求超时 + 5 秒探测超时太紧，健康的实例也会被误判 unhealthy。放宽到 15/20 秒。
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:11001/api/health/ready', timeout=15)"]
       interval: 10s
-      timeout: 5s
+      timeout: 20s
       retries: 12
       start_period: 30s
 
