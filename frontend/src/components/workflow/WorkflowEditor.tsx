@@ -33,6 +33,7 @@ import { useProjectStore } from "@/stores/projectStore";
 import { useControlStore } from "@/stores/controlStore";
 import ExecutionModeModal, { type ExecutionMode } from "./ExecutionModeModal";
 import { createNodeType } from "@/api/nodeTypes";
+import { getSubscriptionError } from "@/api/subscription";
 
 const nodeTypes = { workflow: WorkflowNodeComponent };
 const edgeTypes = { bezier: BezierEdge };
@@ -1630,6 +1631,7 @@ export default function WorkflowEditor({ workflowId, taskId, onExecute }: Props)
       console.error("Execute from node failed:", err);
       setExecuting(false);
       setCancelling(false);
+      alert("执行失败：" + getSubscriptionError(err));
     }
   };
 
@@ -1677,7 +1679,8 @@ export default function WorkflowEditor({ workflowId, taskId, onExecute }: Props)
         console.error("New task creation failed:", err);
         setExecuting(false);
         setCancelling(false);
-        }
+        alert("创建任务失败：" + getSubscriptionError(err));
+      }
       return;
     }
 
@@ -1710,6 +1713,7 @@ export default function WorkflowEditor({ workflowId, taskId, onExecute }: Props)
       console.error("Execute failed:", err);
       setExecuting(false);
       setCancelling(false);
+      alert("执行失败：" + getSubscriptionError(err));
     }
   };
 
