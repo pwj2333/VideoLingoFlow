@@ -87,38 +87,14 @@ def _cookie_secure(http_request: Request) -> bool:
     return (http_request.headers.get("x-forwarded-proto", "") or "").lower() == "https"
 
 
-# 免密本地会话额外信任的来源网段：Docker 默认网桥与 compose 自建 bridge 网络。
-# 容器化部署时请求经端口映射进来，容器看到的来源是网桥地址而不是 127.0.0.1，
-# 严格只认环回会让桌面端自己也拿不到会话、所有接口 401。
-# 只列网桥常用段，不放开全部私有地址（避免 VPS 上误信同机房其它主机）。
-_CONTAINER_BRIDGE_NETWORKS = (
-    ipaddress.ip_network("172.16.0.0/12"),  # Docker 默认 bridge 与 compose 自建网络
-    ipaddress.ip_network("10.0.0.0/8"),     # Docker Swarm / 自定义 overlay
-)
-
-
 def _is_loopback_request(http_request: Request) -> bool:
-    """请求是否来自「可信的本机」，用于免密建立本地会话。
-
-    远程模式（VIDEOLINGO_REMOTE_MODE=1，服务暴露到公网）下只认环回地址。
-    非远程模式下额外信任容器网桥网段，使 Docker 部署的桌面端能建立本地会话。
-
-    注意：放宽意味着凡能访问到 API 端口、且来源落在上述网段的调用方都可以
-    免密取得本地管理员会话。因此务必不要把 API 端口直接暴露到公网；
-    需要公网访问时请置 VIDEOLINGO_REMOTE_MODE=1 并改用账号密码登录。
-    """
     client = http_request.client
     if client is None:
         return False
     try:
-        address = ipaddress.ip_address(client.host)
+        return ipaddress.ip_address(client.host).is_loopback
     except ValueError:
         return False
-    if address.is_loopback:
-        return True
-    if os.getenv("VIDEOLINGO_REMOTE_MODE", "").strip().lower() in {"1", "true", "yes", "on"}:
-        return False
-    return any(address in network for network in _CONTAINER_BRIDGE_NETWORKS)
 
 
 @router.get("/runtime/status")
