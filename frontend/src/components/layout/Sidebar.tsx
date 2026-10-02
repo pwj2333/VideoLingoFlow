@@ -67,6 +67,7 @@ export default function Sidebar({ collapsed, agentState }: { collapsed: boolean;
     return set;
   });
   const navItems = NAV_GROUPS;
+  const hasLocalManager = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
 
   useEffect(() => {
     const handler = (e: Event) => {
@@ -95,15 +96,17 @@ export default function Sidebar({ collapsed, agentState }: { collapsed: boolean;
   }, [hiddenRoutes]);
 
   const fetchStatus = useCallback(async () => {
+    if (!hasLocalManager) return;
     try {
       const res = await fetch("http://localhost:18001/manager/status");
       const data = await res.json();
       setServices(data);
     } catch {
     }
-  }, []);
+  }, [hasLocalManager]);
 
   const restartService = useCallback(async (endpoint: string, svcKey: string) => {
+    if (!hasLocalManager) return;
     setRestartingSvc(svcKey);
     try {
       await fetch(`http://localhost:18001/${endpoint}`, { method: "POST" });
@@ -126,9 +129,10 @@ export default function Sidebar({ collapsed, agentState }: { collapsed: boolean;
         setRestartingSvc(null);
       }
     }, 1000);
-  }, []);
+  }, [hasLocalManager]);
 
   const stopService = useCallback(async (endpoint: string, svcKey: string) => {
+    if (!hasLocalManager) return;
     setStoppingSvc(svcKey);
     try {
       await fetch(`http://localhost:18001/${endpoint}`, { method: "POST" });
@@ -151,9 +155,10 @@ export default function Sidebar({ collapsed, agentState }: { collapsed: boolean;
         setStoppingSvc(null);
       }
     }, 1000);
-  }, []);
+  }, [hasLocalManager]);
 
   const shutdownAll = useCallback(async () => {
+    if (!hasLocalManager) return;
     if (shuttingDownAll) return;
     const confirmed = window.confirm("确认关闭所有端口对应进程，并退出程序吗？");
     if (!confirmed) return;
@@ -167,9 +172,10 @@ export default function Sidebar({ collapsed, agentState }: { collapsed: boolean;
     window.setTimeout(() => {
       setShuttingDownAll(false);
     }, 3000);
-  }, [shuttingDownAll]);
+  }, [hasLocalManager, shuttingDownAll]);
 
   const restartBackendAndWorker = useCallback(async () => {
+    if (!hasLocalManager) return;
     if (restartingBackendAll) return;
     setRestartingBackendAll(true);
     try {
@@ -182,13 +188,14 @@ export default function Sidebar({ collapsed, agentState }: { collapsed: boolean;
       // 请求已发出，按钮短暂展示“重启中”后恢复；worker 实际仍在后台软重启
       window.setTimeout(() => setRestartingBackendAll(false), 1500);
     }
-  }, [fetchStatus, restartingBackendAll]);
+  }, [fetchStatus, hasLocalManager, restartingBackendAll]);
 
   useEffect(() => {
+    if (!hasLocalManager) return;
     fetchStatus();
     const interval = setInterval(fetchStatus, 8000);
     return () => clearInterval(interval);
-  }, [fetchStatus]);
+  }, [fetchStatus, hasLocalManager]);
 
   return (
     <aside
@@ -275,6 +282,7 @@ export default function Sidebar({ collapsed, agentState }: { collapsed: boolean;
             </span>
             <span className="block w-full text-[21px] font-bold bg-gradient-to-r from-purple-500 to-violet-400 bg-clip-text text-transparent">小π智助</span>
           </button>
+          {hasLocalManager && <>
           {/* 横线：位于 Agent 按钮之下、服务列表之上 */}
           <div className="border-t border-[hsl(var(--surface-border))]" />
 
@@ -388,6 +396,7 @@ export default function Sidebar({ collapsed, agentState }: { collapsed: boolean;
               {shuttingDownAll ? "关闭中..." : "关闭所有端口"}
             </button>
           </div>
+          </>}
         </div>
       )}
       {collapsed && (
