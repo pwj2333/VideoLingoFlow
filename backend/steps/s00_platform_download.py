@@ -95,13 +95,16 @@ class S00PlatformDownload(BaseStep):
         cookie_file = node_cfg.get("cookie_file", "")
         use_as_task_name = node_cfg.get("use_as_task_name", False)
 
-        # Determine subtitle language from task input config
-        sub_lang = "en"
+        # Determine subtitle language from task input config. yt-dlp expects
+        # explicit language codes; its ``auto`` value means "no language".
+        sub_lang = "all"
         try:
             tj = os.path.join(task_dir, "task.json")
             if os.path.exists(tj):
                 with open(tj, "r", encoding="utf-8") as f:
-                    sub_lang = _json.load(f).get("input", {}).get("source_language", "") or "en"
+                    requested_lang = _json.load(f).get("input", {}).get("source_language", "")
+                    if requested_lang and str(requested_lang).lower() not in {"auto", "automatic", "自动", "自动检测"}:
+                        sub_lang = str(requested_lang)
         except Exception:
             pass
 
@@ -279,10 +282,13 @@ class S00PlatformDownload(BaseStep):
 
                 # Determine file type
                 ext = os.path.splitext(f)[1].lower()
-                if f.startswith("s00_platform_download_sub"):
+                if f.startswith("s00_platform_download_sub") and ext in {".srt", ".vtt", ".ass", ".ssa", ".ttml"}:
                     new_name = f"{safe_title}_{node_id}{ext}"
                     new_path = os.path.join(cache_dir, new_name)
-                    os.rename(fpath, new_path)
+                    if os.path.abspath(fpath) != os.path.abspath(new_path):
+                        if os.path.exists(new_path):
+                            os.remove(new_path)
+                        os.rename(fpath, new_path)
                     produced["subtitle"] = new_path
                     if callback:
                         callback(80, f"Subtitle: {new_name}")
