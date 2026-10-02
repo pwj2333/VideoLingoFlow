@@ -9,6 +9,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from backend.config.config_manager import ConfigManager
 from backend.llm import direct_router
+from backend.llm.llm_client import LLMClient, LLMRequestError, LLMErrorType
 
 
 with tempfile.TemporaryDirectory() as root:
@@ -18,6 +19,14 @@ with tempfile.TemporaryDirectory() as root:
         assert first.get("llm.use_router") is False
         first.set("llm.step_models.default_model", "demo-model")
         assert ConfigManager().get("llm.step_models.default_model") == "demo-model"
+        with patch("backend.llm.llm_client.config", first):
+            try:
+                LLMClient().chat("s_llm_request", "hello")
+            except LLMRequestError as exc:
+                assert exc.error_type == LLMErrorType.CONFIG
+                assert "Settings > LLM" in str(exc)
+            else:
+                raise AssertionError("missing LLM credentials were accepted")
 
     db_path = Path(root) / "router.db"
     with patch.object(direct_router, "_DB_PATH", db_path):

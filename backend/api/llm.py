@@ -68,14 +68,9 @@ async def test_llm(req: TestRequest):
         api_cfg = llm._get_api_config(req.step_name)
         masked_key = api_cfg["api_key"][:4] + "****" + api_cfg["api_key"][-4:] if len(api_cfg["api_key"]) > 8 else "****"
 
-        # 展示修正后的实际请求 URL
-        client = llm._make_client(api_cfg)
-        actual_url = str(client.base_url).rstrip("/")
-
         print(f"\n{'='*60}")
         print(f"[LLM Test] step_name:  {req.step_name}")
         print(f"[LLM Test] config_url: {api_cfg['base_url']}")
-        print(f"[LLM Test] actual_url: {actual_url}")
         print(f"[LLM Test] api_key:    {masked_key}")
         print(f"[LLM Test] model:      {api_cfg['model']}")
         print(f"[LLM Test] timeout:    {api_cfg['timeout']}")
