@@ -11,9 +11,9 @@ from backend.control_plane.models import Task
 
 router = APIRouter()
 
-WORKFLOWS_DIR = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    "config", "workflows",
+WORKFLOWS_DIR = os.getenv(
+    "YUNZHIAI_WORKFLOWS_DIR",
+    os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "config", "workflows"),
 )
 
 TERMINAL_STATUSES = {"succeeded", "failed", "cancelled", "deleted", "archived"}

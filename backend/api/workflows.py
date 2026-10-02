@@ -3,6 +3,7 @@ import json
 import uuid
 import time
 import shutil
+from pathlib import Path
 from typing import Optional, List, Any
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -12,17 +13,33 @@ TASKS_ROOT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file
 
 router = APIRouter(dependencies=[Depends(current_user)])
 
-WORKFLOWS_DIR = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    "config", "workflows"
+_BUNDLED_WORKFLOWS_DIR = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "config", "workflows"
+)
+WORKFLOWS_DIR = os.getenv(
+    "YUNZHIAI_WORKFLOWS_DIR",
+    os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "config", "workflows"),
 )
 os.makedirs(WORKFLOWS_DIR, exist_ok=True)
 
+# ponytail: seed bundled examples once; later example updates require explicit import.
+if os.path.abspath(WORKFLOWS_DIR) != os.path.abspath(_BUNDLED_WORKFLOWS_DIR):
+    marker = Path(WORKFLOWS_DIR) / ".initialized"
+    if not marker.exists():
+        if not any(name.endswith(".json") for name in os.listdir(WORKFLOWS_DIR)):
+            for bundled in Path(_BUNDLED_WORKFLOWS_DIR).glob("*.json"):
+                shutil.copy2(bundled, Path(WORKFLOWS_DIR) / bundled.name)
+        marker.touch()
+
 # 工作流分组数据文件（与 workflow 定义分离的独立索引表）
-WORKFLOW_GROUPS_FILE = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    "config", "workflow_groups.json"
+WORKFLOW_GROUPS_FILE = os.getenv(
+    "YUNZHIAI_WORKFLOW_GROUPS_FILE",
+    os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "config", "workflow_groups.json"),
 )
+if not os.path.exists(WORKFLOW_GROUPS_FILE):
+    bundled_groups = os.path.join(os.path.dirname(_BUNDLED_WORKFLOWS_DIR), "workflow_groups.json")
+    if os.path.exists(bundled_groups):
+        shutil.copy2(bundled_groups, WORKFLOW_GROUPS_FILE)
 
 
 def _node_config_of(node: dict) -> dict:

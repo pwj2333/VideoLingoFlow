@@ -6,6 +6,7 @@
 恢复支持两种模式：覆盖模式（overwrite）与增量恢复模式（incremental）。
 """
 import json
+import os
 import shutil
 from datetime import datetime
 from pathlib import Path
@@ -14,6 +15,8 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 CONFIG_DIR = Path(__file__).resolve().parent.parent / "config"
+WORKFLOWS_DIR = Path(os.getenv("YUNZHIAI_WORKFLOWS_DIR", str(CONFIG_DIR / "workflows")))
+WORKFLOW_GROUPS_FILE = Path(os.getenv("YUNZHIAI_WORKFLOW_GROUPS_FILE", str(CONFIG_DIR / "workflow_groups.json")))
 BACKEND_DIR = Path(__file__).resolve().parent.parent
 PROJECT_ROOT = BACKEND_DIR.parent
 
@@ -120,11 +123,11 @@ def _category_source_files(category: str):
             for f in sorted(d.glob("*.json")):
                 files.append((f, f"data/subtitle_presets/{f.name}", f"subtitle_presets/{f.name}"))
     elif category == "workflow":
-        d = CONFIG_DIR / "workflows"
+        d = WORKFLOWS_DIR
         if d.is_dir():
             for f in sorted(d.glob("*.json")):
                 files.append((f, f"data/workflows/{f.name}", f"workflows/{f.name}"))
-        g = CONFIG_DIR / "workflow_groups.json"
+        g = WORKFLOW_GROUPS_FILE
         if g.exists():
             files.append((g, "data/workflows/workflow_groups.json", "workflow_groups.json"))
     elif category == "customnode":
@@ -338,6 +341,8 @@ def _category_dest_root(category: str) -> Path:
     """
     if category == "llmrouter":
         return ROUTER_DATA_DIR
+    if category == "workflow":
+        return WORKFLOWS_DIR.parent
     return CONFIG_DIR
 
 
@@ -355,7 +360,7 @@ def _pre_delete(cat: str, planned_dests: set, mode: str) -> None:
                 if f not in planned_dests:
                     f.unlink()
     elif cat == "workflow":
-        d = CONFIG_DIR / "workflows"
+        d = WORKFLOWS_DIR
         if d.is_dir():
             for f in d.glob("*.json"):
                 if f in planned_dests:
@@ -367,7 +372,7 @@ def _pre_delete(cat: str, planned_dests: set, mode: str) -> None:
                 if data.get("type") == "task":
                     continue
                 f.unlink()
-        g = CONFIG_DIR / "workflow_groups.json"
+        g = WORKFLOW_GROUPS_FILE
         if g.exists() and g not in planned_dests:
             g.unlink()
     elif cat == "customnode":

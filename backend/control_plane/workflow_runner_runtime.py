@@ -95,7 +95,7 @@ _OUTPUT_PORT_COUNT = 4
 _STACK_KEY = "__wfRunnerStack"
 
 _BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-_WORKFLOWS_DIR = os.path.join(_BACKEND_DIR, "config", "workflows")
+_WORKFLOWS_DIR = os.getenv("YUNZHIAI_WORKFLOWS_DIR", os.path.join(_BACKEND_DIR, "config", "workflows"))
 
 
 # --------------------------------------------------------------------------- #
