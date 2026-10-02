@@ -21,6 +21,22 @@ def sanitize_filename(name: str) -> str:
     return name[:200]  # Limit length
 
 
+def select_subtitle_language(info: dict) -> str:
+    """Select one available original-language track from yt-dlp metadata."""
+    manual = info.get("subtitles") or {}
+    automatic = info.get("automatic_captions") or {}
+    language = str(info.get("language") or "").lower()
+    base = language.split("-", 1)[0]
+    for tracks, candidates in (
+        (manual, (language, base)),
+        (automatic, (f"{base}-orig", language, base)),
+    ):
+        for candidate in candidates:
+            if candidate and candidate in tracks:
+                return candidate
+    return ""
+
+
 class S00PlatformDownload(BaseStep):
     step_id = "s00_platform_download"
     step_name = "Platform Video Download"
@@ -95,9 +111,7 @@ class S00PlatformDownload(BaseStep):
         cookie_file = node_cfg.get("cookie_file", "")
         use_as_task_name = node_cfg.get("use_as_task_name", False)
 
-        # Determine subtitle language from task input config. yt-dlp expects
-        # explicit language codes; its ``auto`` value means "no language".
-        sub_lang = "all"
+        sub_lang = ""
         try:
             tj = os.path.join(task_dir, "task.json")
             if os.path.exists(tj):
@@ -121,6 +135,18 @@ class S00PlatformDownload(BaseStep):
         # NODE_EXE is set by start.bat; fallback to PATH lookup if absent.
         node_exe = os.environ.get("NODE_EXE")
         js_runtime = f"node:{node_exe}" if node_exe else "node"
+
+        if download_subs and not sub_lang:
+            from yt_dlp import YoutubeDL
+
+            with YoutubeDL({"quiet": True, "skip_download": True,
+                            "js_runtimes": {"node": {"path": node_exe} if node_exe else {}},
+                            "extractor_args": {"youtube": {"player_client": ["web_embedded"]}}}) as ydl:
+                info = ydl.extract_info(url, download=False)
+            sub_lang = select_subtitle_language(info)
+            if not sub_lang:
+                raise ValueError("该视频没有可用的原语言字幕，请指定其他语言或关闭下载字幕")
+            print(f"[S00] Selected subtitle language: {sub_lang}")
 
         # Build yt-dlp command (use python -m yt_dlp for Windows PATH compatibility)
         # Print the title and final filepath at after_move stage, so filepath is real
@@ -230,7 +256,8 @@ class S00PlatformDownload(BaseStep):
                 # Download succeeded despite warnings
                 print(f"[S00] yt-dlp exited with code {result.returncode} (warnings only, download succeeded)")
             else:
-                raise Exception(f"yt-dlp failed: {stderr_text[:300]}")
+                error_lines = [line for line in stderr_lines if line.startswith("ERROR:")]
+                raise Exception(f"yt-dlp failed: {(error_lines[-1] if error_lines else stderr_text)[-500:]}")
 
         print(f"[S00] Download exit code: {result.returncode}")
         if video_title:
@@ -311,6 +338,8 @@ class S00PlatformDownload(BaseStep):
                 f"yt-dlp exit code: {result.returncode}, title: {video_title or 'N/A'}. "
                 f"output: {diag[:500]}"
             )
+        if download_subs and "subtitle" not in produced:
+            raise ValueError(f"字幕下载未生成文件（语言：{sub_lang}），请检查平台字幕是否可用或稍后重试")
 
         # Update task_name if user checked "记录为任务名称" and we have a real title.
         if use_as_task_name and video_title and os.path.exists(task_json):
