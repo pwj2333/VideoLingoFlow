@@ -11,7 +11,7 @@
 # 默认 TORCH_INDEX=cu128（GPU）。纯 CPU 部署请显式传 cpu。
 
 # ---------- 阶段 1: 前端构建 ----------
-FROM node:20-bullseye AS frontend
+FROM node:22-bullseye AS frontend
 WORKDIR /build/frontend
 COPY frontend/package.json frontend/package-lock.json* ./
 # 无 lock 时回退普通 install；有 lock 时用 ci（更快、可复现）
@@ -55,7 +55,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # 业务依赖 `python -m yt_dlp` 等子进程调用，确保 `python` 命令存在
 RUN ln -sf /usr/local/bin/python3 /usr/local/bin/python
 
-# The frontend stage provides Node 20 for yt-dlp's JavaScript challenges.
+# The frontend stage provides Node 22 for yt-dlp's JavaScript challenges.
 COPY --from=frontend /usr/local/bin/node /usr/local/bin/node
 
 
