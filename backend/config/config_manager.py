@@ -1,9 +1,11 @@
 import os
+import tempfile
 import threading
 from typing import Any, Optional
 from ruamel.yaml import YAML
 
 CONFIG_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "config", "config.yaml")
+RUNTIME_CONFIG_PATH = os.getenv("YUNZHIAI_CONFIG_PATH", "")
 _config_lock = threading.Lock()
 
 _yaml = YAML()
@@ -38,7 +40,29 @@ class ConfigManager:
     """Thread-safe YAML config manager. Reads on every get() call for live updates."""
 
     def __init__(self, path: Optional[str] = None):
-        self.path = path or CONFIG_PATH
+        self.path = path or RUNTIME_CONFIG_PATH or CONFIG_PATH
+        if not path and RUNTIME_CONFIG_PATH:
+            self._initialize_runtime_config()
+
+    def _initialize_runtime_config(self):
+        if os.path.exists(self.path):
+            return
+        os.makedirs(os.path.dirname(self.path), exist_ok=True)
+        with open(CONFIG_PATH, "r", encoding="utf-8") as source:
+            data = _yaml.load(source) or {}
+        llm = data.setdefault("llm", {})
+        llm.update(use_router=False, base_url="", api_key="", enable_step_models=False)
+        llm.setdefault("step_models", {})["default_model"] = ""
+        fd, temporary = tempfile.mkstemp(prefix=".config-", suffix=".yaml", dir=os.path.dirname(self.path))
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as target:
+                _yaml.dump(data, target)
+            try:
+                os.link(temporary, self.path)
+            except FileExistsError:
+                pass
+        finally:
+            os.unlink(temporary)
 
     def _load(self) -> dict:
         with open(self.path, "r", encoding="utf-8") as f:
@@ -46,8 +70,14 @@ class ConfigManager:
         return data or {}
 
     def _save(self, data: dict):
-        with open(self.path, "w", encoding="utf-8") as f:
-            _yaml.dump(data, f)
+        fd, temporary = tempfile.mkstemp(prefix=".config-", suffix=".yaml", dir=os.path.dirname(self.path))
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                _yaml.dump(data, f)
+            os.replace(temporary, self.path)
+        finally:
+            if os.path.exists(temporary):
+                os.unlink(temporary)
 
     @staticmethod
     def _traverse(data: dict, keys: list) -> Any:

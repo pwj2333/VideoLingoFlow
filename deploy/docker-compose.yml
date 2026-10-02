@@ -69,6 +69,7 @@ services:
       CLUSTER_MODE: "1"
       VIDEOLINGO_REMOTE_MODE: ${VIDEOLINGO_REMOTE_MODE:-0}
       YUNZHIAI_SELF_USE: ${YUNZHIAI_SELF_USE:-1}
+      YUNZHIAI_CONFIG_PATH: /app/data/config.yaml
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
       POSTGRES_DB: ${POSTGRES_DB}
@@ -132,6 +133,7 @@ services:
     environment:
       CLUSTER_MODE: "1"
       YUNZHIAI_SELF_USE: ${YUNZHIAI_SELF_USE:-1}
+      YUNZHIAI_CONFIG_PATH: /app/data/config.yaml
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
       POSTGRES_DB: ${POSTGRES_DB}

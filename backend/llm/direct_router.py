@@ -60,10 +60,20 @@ def _decrypt(ciphertext: str) -> str:
 # DB helpers (sync sqlite3, open/close per call for concurrency safety)
 # ---------------------------------------------------------------------------
 def _get_conn() -> sqlite3.Connection:
-    conn = sqlite3.connect(str(_DB_PATH), timeout=5)
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA journal_mode=WAL")  # enable WAL for concurrent read/write
-    return conn
+    if not _DB_PATH.is_file():
+        raise DirectRouterError("大模型路由器尚未配置；请在全局设置中选择“自定义大模型”并填写 API 地址、密钥和模型名")
+    try:
+        conn = sqlite3.connect(f"{_DB_PATH.as_uri()}?mode=rw", uri=True, timeout=5)
+        conn.row_factory = sqlite3.Row
+        required = {"strategies", "strategy_rules", "providers", "models", "api_keys", "request_logs"}
+        tables = {row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+        if missing := required - tables:
+            conn.close()
+            raise DirectRouterError(f"大模型路由器数据库未初始化（缺少 {', '.join(sorted(missing))}）；请先配置路由器，或在全局设置中改用“自定义大模型”")
+        conn.execute("PRAGMA journal_mode=WAL")
+        return conn
+    except sqlite3.DatabaseError as exc:
+        raise DirectRouterError(f"大模型路由器数据库不可用：{exc}") from exc
 
 
 def _row_to_dict(row: sqlite3.Row) -> dict:
