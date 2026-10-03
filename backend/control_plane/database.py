@@ -6,6 +6,7 @@ from typing import Iterator
 from sqlalchemy import Select, create_engine, event, inspect, text
 from sqlalchemy.engine import Engine, make_url
 from sqlalchemy.orm import Session, sessionmaker, with_loader_criteria
+from sqlalchemy.pool import NullPool
 
 
 _engine: Engine | None = None
@@ -78,7 +79,8 @@ def configure_database(url: str | None = None) -> None:
             Path(sqlite_url.database).expanduser().parent.mkdir(parents=True, exist_ok=True)
         engine_options = {"connect_args": {"timeout": 5}, "pool_pre_ping": True}
         if sqlite_url.database != ":memory:":
-            engine_options.update(pool_size=5, max_overflow=0)
+            # ponytail: one SQLite writer remains the ceiling; use PostgreSQL if writes contend.
+            engine_options["poolclass"] = NullPool
         _engine = create_engine(target_url, **engine_options)
         event.listen(_engine, "connect", _configure_sqlite_connection)
     else:
