@@ -315,6 +315,7 @@ class CutiaHeadlessRenderer:
                         "--autoplay-policy=no-user-gesture-required",
                         "--disable-dev-shm-usage",
                         "--disable-features=BlockInsecurePrivateNetworkRequests",
+                        f"--unsafely-treat-insecure-origin-as-secure={self.base_url}",
                     ],
                 }
                 if self.browser_channel:
