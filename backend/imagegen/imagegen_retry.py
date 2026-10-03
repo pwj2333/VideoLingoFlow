@@ -40,7 +40,17 @@ def request_with_retry(method: str, url: str, *, retries: int = DEFAULT_RETRIES,
     last = None
     for attempt in range(max(1, retries)):
         try:
-            return requests.request(method, url, **kwargs)
+            response = requests.request(method, url, **kwargs)
+            if response.status_code >= 500:
+                last = RuntimeError(f"HTTP {response.status_code}: {url}")
+                response.close()
+                if attempt < retries - 1:
+                    wait = backoff * (2 ** attempt)
+                    logger.warning("HTTP 5xx; retrying in %ss (%d/%d): %s", wait, attempt + 1, retries, last)
+                    time.sleep(wait)
+                    continue
+                raise last
+            return response
         except _RETRYABLE as e:
             last = e
             if attempt < retries - 1:
