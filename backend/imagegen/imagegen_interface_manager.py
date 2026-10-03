@@ -215,6 +215,8 @@ class ImageGenInterfaceManager:
         # endpoints such as Doubao/Seedream; standard OpenAI uses pixel enums
         # like "1024x1024"). An explicit `size` in cfg/custom_params overrides.
         size = kwargs.get("size") or cfg.get("size") or kwargs.get("resolution", "1K")
+        if size in {"1K", "2K", "4K"}:
+            size = self._resolve_size(size, kwargs.get("aspect_ratio", "1:1"))
         body["size"] = size
 
         # aspect_ratio: many compatible endpoints (e.g. Doubao) accept this as
