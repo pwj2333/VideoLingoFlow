@@ -703,7 +703,7 @@ class S09TTS(BaseStep):
             # 执行合成 - 只传递 synthesize 方法接受的参数
             if hasattr(engine, 'synthesize'):
                 try:
-                    engine.synthesize(
+                    result = engine.synthesize(
                         text, output_path,
                         ref_audio=ref_audio,
                         mode=mode,
@@ -715,7 +715,7 @@ class S09TTS(BaseStep):
                     )
                 except TypeError:
                     # 引擎不支持 speed 参数，回退到普通合成
-                    engine.synthesize(
+                    result = engine.synthesize(
                         text, output_path,
                         ref_audio=ref_audio,
                         mode=mode,
@@ -726,6 +726,9 @@ class S09TTS(BaseStep):
                     )
             else:
                 raise ValueError(f"引擎 {engine_id} 没有 synthesize 方法")
+
+            if result is False or not os.path.isfile(output_path) or os.path.getsize(output_path) == 0:
+                raise RuntimeError(f"TTS engine returned no valid audio: {output_path}")
 
             print(f"  ✓ 合成成功: {output_path}")
             return True
