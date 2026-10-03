@@ -67,6 +67,7 @@ services:
     #           capabilities: [gpu]
     environment:
       CLUSTER_MODE: "1"
+      CELERY_CONTROL_PLANE_CONCURRENCY: ${CELERY_CONTROL_PLANE_CONCURRENCY:-1}
       VIDEOLINGO_REMOTE_MODE: ${VIDEOLINGO_REMOTE_MODE:-0}
       YUNZHIAI_SELF_USE: ${YUNZHIAI_SELF_USE:-1}
       YUNZHIAI_CONFIG_PATH: /app/data/config.yaml
@@ -138,6 +139,7 @@ services:
     #           capabilities: [gpu]
     environment:
       CLUSTER_MODE: "1"
+      CELERY_CONTROL_PLANE_CONCURRENCY: ${CELERY_CONTROL_PLANE_CONCURRENCY:-1}
       YUNZHIAI_SELF_USE: ${YUNZHIAI_SELF_USE:-1}
       YUNZHIAI_CONFIG_PATH: /app/data/config.yaml
       YUNZHIAI_WORKFLOWS_DIR: /app/data/workflows
