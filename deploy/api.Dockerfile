@@ -86,12 +86,15 @@ COPY backend/ /app/backend/
 COPY alembic.ini /app/alembic.ini
 COPY thirdparty/ /app/thirdparty/
 COPY config/ /app/config/
+COPY deploy/runtime-init.sh /app/runtime-init.sh
+COPY deploy/runtime-init.py /app/runtime-init.py
 
 # 前端构建产物
 COPY --from=frontend /build/frontend/dist /app/frontend/dist
 
 # 运行时目录（数据 / 模型缓存 / 临时预览 由 volume 挂载，这里仅建占位）
 RUN mkdir -p /app/data /app/_model_cache /app/temp /app/tasks \
+    && chmod +x /app/runtime-init.sh \
     && find /app -name "__pycache__" -type d -prune -exec rm -rf {} + 2>/dev/null || true
 
 # 健康检查（依赖 `python` 软链，已在上方建立）

@@ -50,7 +50,7 @@ services:
 
   api:
     image: ${API_IMAGE}
-    command: ["sh", "-c", "mkdir -p /app/data/assets && exec uvicorn backend.main:app --host 0.0.0.0 --port 11001 --proxy-headers"]
+    command: ["sh", "-c", "python /app/runtime-init.py && mkdir -p /app/data/assets && exec uvicorn backend.main:app --host 0.0.0.0 --port 11001 --proxy-headers"]
     build:
       context: ..
       dockerfile: deploy/api.Dockerfile
@@ -72,6 +72,10 @@ services:
       YUNZHIAI_CONFIG_PATH: /app/data/config.yaml
       YUNZHIAI_WORKFLOWS_DIR: /app/data/workflows
       YUNZHIAI_WORKFLOW_GROUPS_FILE: /app/data/workflow_groups.json
+      CONTROL_PLANE_DATA_ROOT: /app/data
+      CONTROL_PLANE_ASSET_ROOT: /app/data/assets
+      CONTROL_PLANE_WORKSPACE_ROOT: /app/data/persisted/app/control_plane_workspaces
+      TASKS_ROOT: /app/data/persisted/app/tasks
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
       POSTGRES_DB: ${POSTGRES_DB}
@@ -123,7 +127,7 @@ services:
       args:
         TORCH_INDEX: ${TORCH_INDEX:-cu128}
     restart: unless-stopped
-    command: ["celery", "-A", "backend.control_plane.celery_runtime.celery_app", "worker", "--loglevel=INFO", "--hostname=yunzhiai-worker@%h", "--pool=threads", "--concurrency=5", "--queues=videolingo_cpu,videolingo_gpu,videolingo_llm,videolingo_tts,videolingo_io"]
+    command: ["sh", "-c", "python /app/runtime-init.py && exec celery -A backend.control_plane.celery_runtime.celery_app worker --loglevel=INFO --hostname=yunzhiai-worker@%h --pool=threads --concurrency=5 --queues=videolingo_cpu,videolingo_gpu,videolingo_llm,videolingo_tts,videolingo_io"]
     # 需要 GPU 推理时取消下行注释（宿主需安装 NVIDIA Container Toolkit）
     # deploy:
     #   resources:
@@ -138,6 +142,10 @@ services:
       YUNZHIAI_CONFIG_PATH: /app/data/config.yaml
       YUNZHIAI_WORKFLOWS_DIR: /app/data/workflows
       YUNZHIAI_WORKFLOW_GROUPS_FILE: /app/data/workflow_groups.json
+      CONTROL_PLANE_DATA_ROOT: /app/data
+      CONTROL_PLANE_ASSET_ROOT: /app/data/assets
+      CONTROL_PLANE_WORKSPACE_ROOT: /app/data/persisted/app/control_plane_workspaces
+      TASKS_ROOT: /app/data/persisted/app/tasks
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
       POSTGRES_DB: ${POSTGRES_DB}
@@ -176,7 +184,7 @@ services:
   voiceforge-worker:
     extends:
       service: worker
-    command: ["celery", "-A", "backend.voiceforge.tasks.celery_app.celery_app", "worker", "--loglevel=INFO", "--hostname=voiceforge@%h", "--pool=threads", "--concurrency=5", "--queues=voiceforge_synthesis,voiceforge_voice,voiceforge_export"]
+    command: ["sh", "-c", "python /app/runtime-init.py && exec celery -A backend.voiceforge.tasks.celery_app.celery_app worker --loglevel=INFO --hostname=voiceforge@%h --pool=threads --concurrency=5 --queues=voiceforge_synthesis,voiceforge_voice,voiceforge_export"]
     healthcheck:
       test: ["CMD-SHELL", "celery -A backend.voiceforge.tasks.celery_app.celery_app inspect ping -d voiceforge@$$HOSTNAME --timeout=3 | grep -q pong"]
 
