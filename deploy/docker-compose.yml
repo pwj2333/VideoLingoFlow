@@ -48,6 +48,25 @@ services:
       timeout: 5s
       retries: 12
 
+  cutia:
+    build:
+      context: ..
+      dockerfile: deploy/cutia.Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 4100
+      HOSTNAME: 0.0.0.0
+    networks:
+      - backend
+    expose:
+      - "4100"
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://127.0.0.1:4100/cutia/zh/editor/health', r => process.exit(r.statusCode < 500 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
   api:
     image: ${API_IMAGE}
     command: ["sh", "-c", "python /app/runtime-init.py && mkdir -p /app/data/assets && exec uvicorn backend.main:app --host 0.0.0.0 --port 11001 --proxy-headers"]
@@ -68,6 +87,7 @@ services:
     environment:
       CLUSTER_MODE: "1"
       CELERY_CONTROL_PLANE_CONCURRENCY: ${CELERY_CONTROL_PLANE_CONCURRENCY:-1}
+      CUTIA_UPSTREAM: http://cutia:4100
       VIDEOLINGO_REMOTE_MODE: ${VIDEOLINGO_REMOTE_MODE:-0}
       YUNZHIAI_SELF_USE: ${YUNZHIAI_SELF_USE:-1}
       YUNZHIAI_CONFIG_PATH: /app/data/config.yaml
@@ -107,6 +127,8 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
+      cutia:
+        condition: service_healthy
     expose:
       - "11001"
     ports:
@@ -140,6 +162,8 @@ services:
     environment:
       CLUSTER_MODE: "1"
       CELERY_CONTROL_PLANE_CONCURRENCY: ${CELERY_CONTROL_PLANE_CONCURRENCY:-1}
+      VIDEOLINGO_BACKEND_HOST: api
+      VIDEOLINGO_BACKEND_PORT: "11001"
       YUNZHIAI_SELF_USE: ${YUNZHIAI_SELF_USE:-1}
       YUNZHIAI_CONFIG_PATH: /app/data/config.yaml
       YUNZHIAI_WORKFLOWS_DIR: /app/data/workflows

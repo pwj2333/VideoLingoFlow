@@ -230,7 +230,10 @@ app.include_router(llm_router_update.router, tags=["llm-router-update"])
 app.include_router(notifications.router, prefix="/api/notifications", tags=["notifications"])
 
 LLM_ROUTER_UPSTREAM = "http://127.0.0.1:8800"
-CUTIA_UPSTREAM = f"http://127.0.0.1:{os.environ.get('CUTIA_PORT', '4100')}"
+CUTIA_UPSTREAM = os.environ.get(
+    "CUTIA_UPSTREAM",
+    f"http://127.0.0.1:{os.environ.get('CUTIA_PORT', '4100')}",
+).rstrip("/")
 HOP_BY_HOP_HEADERS = {
     "connection", "keep-alive", "proxy-authenticate", "proxy-authorization",
     "te", "trailer", "transfer-encoding", "upgrade",

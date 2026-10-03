@@ -314,6 +314,7 @@ class CutiaHeadlessRenderer:
                     "args": [
                         "--autoplay-policy=no-user-gesture-required",
                         "--disable-dev-shm-usage",
+                        "--disable-features=BlockInsecurePrivateNetworkRequests",
                     ],
                 }
                 if self.browser_channel:
