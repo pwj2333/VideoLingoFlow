@@ -60,9 +60,7 @@ export default function BatchTaskItem({ task, workflowNodes, selected, onSelect,
     "";
 
   const handleOpenFolder = async () => {
-    try {
-      await client.post("/api/tasks/open-file", { file_path: task.task_id });
-    } catch {}
+    window.open(`/api/tasks/${encodeURIComponent(task.task_id)}/archive`, "_blank", "noopener,noreferrer");
   };
 
   const handleEdit = () => {

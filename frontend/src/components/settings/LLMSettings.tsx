@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { settingsApi } from "@/api/settings";
 import { Brain, Link, Key, Layers, Zap, Loader2, Info, ExternalLink, Wrench } from "lucide-react";
@@ -36,6 +36,7 @@ export default function LLMSettings() {
   const [testing, setTesting] = useState<string | null>(null);
   const [testResult, setTestResult] = useState<Record<string, { ok: boolean; msg: string }>>({});
   const [promptEditorOpen, setPromptEditorOpen] = useState(false);
+  const baseUrlHydrated = useRef(false);
 
   useEffect(() => {
     settingsApi.getAll().then((res) => {
@@ -44,6 +45,7 @@ export default function LLMSettings() {
       setRouterUrl(cfg.router_url || "http://localhost:8800/v1");
       setRouterApiKey(cfg.router_api_key || "123");
       setBaseUrl(cfg.base_url || "");
+      baseUrlHydrated.current = true;
       setApiKey(cfg.api_key || "");
       setMaxConcurrent(String(cfg.max_concurrent || 10));
       setMaxRequestChars(String(cfg.max_request_chars || 12000));
@@ -54,6 +56,14 @@ export default function LLMSettings() {
       setModels(cfg.step_models || {});
     });
   }, []);
+
+  useEffect(() => {
+    if (!baseUrlHydrated.current) return;
+    const timer = window.setTimeout(() => {
+      void settingsApi.update("llm.base_url", baseUrl);
+    }, 500);
+    return () => window.clearTimeout(timer);
+  }, [baseUrl]);
 
   const testModel = async (stepId: string) => {
     setTesting(stepId);
@@ -148,7 +158,6 @@ export default function LLMSettings() {
                 className="w-full mt-2 px-3.5 py-2.5 border border-border/60 rounded-xl bg-background/50 text-sm focus:border-primary/50 focus:ring-2 focus:ring-primary/10 transition-all duration-200 outline-none"
                 value={baseUrl}
                 onChange={(e) => setBaseUrl(e.target.value)}
-                onBlur={() => settingsApi.update("llm.base_url", baseUrl)}
                 placeholder="https://your-api-router.com/v1"
               />
               <p className="text-xs text-muted-foreground mt-1">

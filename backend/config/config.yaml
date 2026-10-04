@@ -97,7 +97,7 @@ subtitle:
   outline: 2
   shadow: 1
   margin_v: 30
-  default_preset: "英-中-下中-001"
+  default_preset: "ai_science_clean"
   primary_on_top: true
 
 # ============ Video Processing ============

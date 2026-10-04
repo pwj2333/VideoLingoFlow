@@ -273,7 +273,12 @@ class CutiaHeadlessRenderer:
         stall_timeout: Optional[float] = None,
     ) -> None:
         self.base_url = (base_url or resolve_backend_base_url()).rstrip("/")
-        self.browser_channel = (browser_channel or "").strip() or None
+        # Chrome for Testing exposes WebCodecs in headless mode; Playwright's
+        # default headless shell does not. Keep an explicit node setting as the
+        # override, while using the full Chromium channel for server renders.
+        self.browser_channel = (
+            browser_channel or os.environ.get("VIDEOLINGO_BROWSER_CHANNEL") or "chromium"
+        ).strip() or None
         self.timeout = max(60.0, float(timeout))
         self.headless = headless
         self.stall_timeout = _resolve_stall_timeout(self.timeout, stall_timeout)

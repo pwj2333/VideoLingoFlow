@@ -103,6 +103,14 @@ class StepOutput:
         produced = {}
         total = len(upstream_files)
         for i, (file_type, src_path) in enumerate(upstream_files.items()):
+            # Upstream nodes persist task-relative paths (for example
+            # ``output/video.mp4``). Resolve those against this task before
+            # copying; otherwise the process working directory is used.
+            if not os.path.isabs(src_path):
+                src_path = os.path.join(task_dir, src_path)
+            src_path = os.path.normpath(src_path)
+            if not os.path.isfile(src_path):
+                raise FileNotFoundError(src_path)
             ext = os.path.splitext(src_path)[1]
 
             # Build output filename

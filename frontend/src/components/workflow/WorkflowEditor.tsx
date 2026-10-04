@@ -2099,8 +2099,8 @@ export default function WorkflowEditor({ workflowId, taskId, onExecute }: Props)
                         return;
                       }
                       try {
-                        // 打开当前任务的执行文件夹（与历史任务卡片行为一致，os.startfile 打开系统文件管理器）
-                        await client.post("/api/tasks/open-file", { file_path: taskId });
+                        // Docker runs on a remote Linux host, so download the workspace instead of opening its server folder.
+                        window.open(`/api/tasks/${encodeURIComponent(taskId)}/archive`, "_blank", "noopener,noreferrer");
                       } catch (err) {
                         console.error("Open task folder failed:", err);
                         alert("打开任务执行文件夹失败");

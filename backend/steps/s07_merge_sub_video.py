@@ -86,7 +86,9 @@ class S07MergeSubVideo(BaseStep):
             cancel_callback: Optional[Callable] = None) -> dict:
         step_inputs = getattr(self, "_step_inputs", {}) or {}
         # 1. Read config
-        preset_id = self._get_config("preset_id") or config.get("subtitle.default_preset", "")
+        # ponytail: the science workflow needs a predictable readable style;
+        # keep an explicit node preset as the override for other workflows.
+        preset_id = self._get_config("preset_id") or config.get("subtitle.default_preset", "ai_science_clean")
         primary_on_top = self._get_config("primary_on_top", True)
         if isinstance(primary_on_top, str):
             primary_on_top = primary_on_top.lower() in ("true", "1", "yes")

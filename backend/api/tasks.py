@@ -1,11 +1,13 @@
 """Tasks API: query task status, artifacts, and task lifecycle actions."""
 import json
 import os
+import tempfile
+import zipfile
 from pathlib import Path
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, BackgroundTasks, HTTPException
+from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 
 router = APIRouter()
@@ -418,3 +420,36 @@ async def open_file(req: OpenFileRequest):
             os.startfile(str(resolved))
             return _deprecated({"success": True})
     raise HTTPException(404, "File not found")
+
+
+@router.get("/{task_id}/archive")
+async def archive_task(task_id: str, background_tasks: BackgroundTasks):
+    """Download a task workspace for remote Docker deployments.
+
+    ``os.startfile`` can only open a folder on the server desktop. For a
+    browser connected to a Linux container, return a temporary ZIP instead.
+    """
+    if not task_id or Path(task_id).name != task_id or task_id in {".", ".."}:
+        raise HTTPException(400, "Invalid task id")
+    root = Path(os.getenv("CONTROL_PLANE_WORKSPACE_ROOT", Path.cwd() / "control_plane_workspaces")).resolve()
+    workspace = (root / task_id).resolve()
+    if not workspace.is_dir() or not workspace.is_relative_to(root):
+        raise HTTPException(404, "Task workspace not found")
+
+    fd, archive_path = tempfile.mkstemp(prefix=f"task-{task_id}-", suffix=".zip")
+    os.close(fd)
+    try:
+        with zipfile.ZipFile(archive_path, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=3) as archive:
+            for source in workspace.rglob("*"):
+                if source.is_file() and not source.is_symlink():
+                    archive.write(source, source.relative_to(workspace).as_posix())
+    except Exception:
+        Path(archive_path).unlink(missing_ok=True)
+        raise
+    background_tasks.add_task(Path(archive_path).unlink, missing_ok=True)
+    return FileResponse(
+        archive_path,
+        media_type="application/zip",
+        filename=f"task-{task_id}.zip",
+        background=background_tasks,
+    )
