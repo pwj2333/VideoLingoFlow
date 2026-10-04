@@ -31,9 +31,18 @@ for mapping in config.yaml:config.yaml workflows:workflows workflow_groups.json:
   fi
 done
 
-for item in /app/config/prompt_templates.json /app/config/voiceforge_prompt_defaults.json /app/config/prompts /app/thirdparty/QM-LocalRouter/backend/data /app/thirdparty/social-auto-upload-web-ui/data /app/control_plane_workspaces /app/tasks /app/output /app/share /app/logs /app/backend/backups; do
+for item in /app/config/prompt_templates.json /app/config/voiceforge_prompt_defaults.json /app/config/prompts /app/thirdparty/QM-LocalRouter/backend/data /app/thirdparty/social-auto-upload-web-ui/data /app/control_plane_workspaces /app/tasks /app/backend/tasks /app/backend/config/agent /app/backend/nodes /app/static /app/output /app/share /app/logs /app/backend/backups /app/backend/aigc/workflows /app/.cache /root/.agent /root/.lcsoftware; do
   target="/app/data/persisted${item}"
   mkdir -p "$(dirname "$target")"
+  case "$item" in
+    /app/config/prompt_templates.json|/app/config/voiceforge_prompt_defaults.json)
+      ;;
+    *)
+      # Repair stale image-layer placeholders before migrating directory data.
+      if [ -e "$item" ] && [ ! -d "$item" ] && [ ! -L "$item" ]; then rm -rf "$item"; fi
+      if [ -e "$target" ] && [ ! -d "$target" ] && [ ! -L "$target" ]; then rm -rf "$target"; fi
+      ;;
+  esac
   if [ ! -e "$target" ]; then
     if [ -e "$item" ] && [ ! -L "$item" ]; then
       cp -a "$item" "$target"
