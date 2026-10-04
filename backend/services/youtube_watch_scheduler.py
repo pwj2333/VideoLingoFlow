@@ -9,6 +9,7 @@ import time
 
 _stop = threading.Event()
 _thread: threading.Thread | None = None
+_last_checked: dict[str, float] = {}
 
 
 def _workflows_dir() -> str:
@@ -42,6 +43,12 @@ def _scan_once() -> None:
             channel = str(config.get("channel_url") or config.get("channel_name") or "").strip()
             if not channel:
                 continue
+            interval = max(5, int(config.get("poll_interval_minutes", 30) or 30)) * 60
+            watch_key = f"{filename}:{channel}"
+            now = time.monotonic()
+            if now - _last_checked.get(watch_key, 0) < interval:
+                continue
+            _last_checked[watch_key] = now
             try:
                 item = _latest(channel)
                 state_key = f"youtube:{os.path.splitext(filename)[0]}:{item['video_id']}"
