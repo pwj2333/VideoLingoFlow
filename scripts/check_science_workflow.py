@@ -65,6 +65,12 @@ with tempfile.TemporaryDirectory() as directory:
          patch.object(scheduler, "_latest", side_effect=lambda _: dict(item)), \
          patch("backend.control_plane.workflow_runtime.submit_workflow", create=True) as submit, \
          patch.object(scheduler.time, "time", return_value=10000) as now:
+        watcher["data"]["disableExecute"] = True
+        workflow_file.write_text(json.dumps(workflow), encoding="utf-8")
+        scheduler._scan_once()
+        assert not (root / "state").exists()
+        watcher["data"]["disableExecute"] = False
+        workflow_file.write_text(json.dumps(workflow), encoding="utf-8")
         scheduler._scan_once()
         submit.assert_not_called()  # only_new starts by recording a baseline.
         now.return_value += 2000

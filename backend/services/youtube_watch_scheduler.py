@@ -40,7 +40,7 @@ def _scan_once() -> None:
         watchers = [n for n in nodes if (n.get("data") or {}).get("nodeType") == "youtube_channel_watch"]
         for watcher in watchers:
             config = (watcher.get("data") or {}).get("config") or {}
-            if config.get("schedule_enabled") is not True or (watcher.get("data") or {}).get("disabled"):
+            if config.get("schedule_enabled") is not True or (watcher.get("data") or {}).get("disableExecute"):
                 continue
             channel = str(config.get("channel_url") or config.get("channel_name") or "").strip()
             if not channel:
