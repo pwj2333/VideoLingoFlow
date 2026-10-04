@@ -392,10 +392,21 @@ class S_MergeDub(BaseStep):
                 seg.get("read_text") or seg.get("text", "")
             )
             sentences = S_MergeDub._split_subtitle_sentences(spoken_text) or [""]
-            weights = [max(len(re.sub(r"\s+", "", sentence)), 1) for sentence in sentences]
+            # A long sentence may still wrap to several lines. Turn every pair
+            # of wrapped lines into its own timed event so the burn never shows
+            # more than two rows at once.
+            display_chunks: List[str] = []
+            for sentence in sentences:
+                wrapped_lines = (S_MergeDub._wrap_subtitle_text(sentence) or "").split("\\N")
+                display_chunks.extend(
+                    "\\N".join(wrapped_lines[index:index + 2])
+                    for index in range(0, len(wrapped_lines), 2)
+                )
+            display_chunks = display_chunks or [""]
+            weights = [max(len(re.sub(r"\\s+", "", chunk.replace("\\N", ""))), 1) for chunk in display_chunks]
             total_weight = sum(weights)
             cursor = float(start)
-            for sentence_index, (sentence, weight) in enumerate(zip(sentences, weights)):
+            for sentence_index, (sentence, weight) in enumerate(zip(display_chunks, weights)):
                 sentence_start = cursor
                 sentence_end = (
                     float(end)
@@ -409,7 +420,7 @@ class S_MergeDub(BaseStep):
                     f"{S_MergeDub._format_srt_time(sentence_start)} --> "
                     f"{S_MergeDub._format_srt_time(sentence_end)}"
                 )
-                lines.append(S_MergeDub._wrap_subtitle_text(sentence))
+                lines.append(sentence)
                 lines.append("")
                 count += 1
                 cursor = sentence_end

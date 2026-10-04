@@ -8,18 +8,19 @@ from backend.steps.base_step import BaseStep
 
 
 TECHNICAL_INFOGRAPHIC_STYLE = """
-Professional technical infographic and knowledge architecture diagram for an AI computing
-education video. Create a horizontal 16:9 composition in 2K resolution with a white or
-very light background, a precise modular grid, generous whitespace, and a clear visual
-hierarchy. Use rounded information cards, columns, numbered sections, thin crisp borders,
-flow arrows, connectors, and simple consistent line icons to explain one concrete idea
-from the paragraph: a system architecture, data pipeline, cause and effect, comparison,
-or step-by-step process. Use restrained low-saturation blue, green, purple, and orange
-accents. Flat vector illustration, modern SaaS documentation style, polished enterprise
-UI diagram, balanced spacing, readable at a glance, no photorealism, no dark cinematic
-background, no glossy 3D, no gradients. Do not render subtitles, long paragraphs, fake
-statistics, random letters, random digits, watermarks, logos, or decorative clutter;
-use simple icon placeholders and short generic labels because subtitles are added later.
+Nano Banana Pro hand-drawn cartoon infographic for an AI computing education video.
+Use a pure hand-drawn illustration style: sketch lines, rough marker or crayon strokes,
+pastel accents, simple doodle shapes, and a friendly cartoon visual language. Landscape
+16:9 composition, 2K quality, white or very light paper-like background, extensive
+whitespace, and one clear core concept from the paragraph. Organize the idea as a clean
+hand-drawn infographic with a short hand-lettered title, 3 to 6 short labels, simple
+arrows, circles, underlines, stars, boxes, small icons, and an optional cute mascot.
+Use restrained blue, green, purple, and orange accents. Keep the same visual system in
+all ten images. Text must be concise, hand-drawn, and in the same language as the input.
+Never create an essay, subtitles, long paragraphs, dense UI panels, polished digital SaaS
+cards, photorealism, realistic shading, 3D rendering, gradients, glossy effects, logos,
+watermarks, random letters, fake statistics, or decorative clutter. Keep meaningful
+empty space so the illustration remains readable behind subtitles.
 """.strip()
 
 

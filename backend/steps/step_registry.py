@@ -3,6 +3,7 @@ Step registry: maps step IDs to step class instances.
 Import all step modules and register them here.
 """
 from backend.steps.s00_platform_download import S00PlatformDownload
+from backend.steps.s_youtube_channel_watch import S_YoutubeChannelWatch
 from backend.steps.s00_batch_download import S00BatchDownload
 from backend.steps.s01_download import S01Download
 from backend.steps.s02_asr import S02ASR
@@ -134,6 +135,8 @@ from backend.steps.s_video_concat import S_VideoConcat
 
 # Step ID -> instance mapping
 _STEPS = {
+    "youtube_channel_watch": S_YoutubeChannelWatch(),
+    "s_youtube_channel_watch": S_YoutubeChannelWatch(),
     "s00_platform_download": S00PlatformDownload(),
     "platform_download": S00PlatformDownload(),
     "s00_batch_download": S00BatchDownload(),

@@ -29,6 +29,7 @@ NODE_TYPES_DIR = os.path.join(
 )
 
 BUILTIN_STEP_REGISTRY = {
+    "youtube_channel_watch": ("backend.steps.s_youtube_channel_watch", "S_YoutubeChannelWatch"),
     "platform_download": ("backend.steps.s00_platform_download", "S00PlatformDownload"),
     "batch_download": ("backend.steps.s00_batch_download", "S00BatchDownload"),
     "asr": ("backend.steps.s02_asr", "S02ASR"),

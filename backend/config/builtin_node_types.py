@@ -361,6 +361,33 @@ BUILTIN_NODE_TYPES = [
         ],
     },
     {
+        "id": "youtube_channel_watch",
+        "name": "YouTube频道监视",
+        "execution_domain": "process",
+        "category": "network_request",
+        "description": "定期检查频道最新视频，输出新视频 URL",
+        "icon": "Radar",
+        "color": "#ef4444",
+        "inputs": [],
+        "outputs": [
+            {"id": "url", "label": "新视频 URL", "type": "url"},
+            {"id": "video_id", "label": "视频 ID", "type": "text"},
+            {"id": "title", "label": "标题", "type": "text"},
+            {"id": "is_new", "label": "是否新视频", "type": "text"},
+        ],
+        "defaultConfig": {
+            "channel_name": "", "channel_url": "", "poll_interval_minutes": 30,
+            "only_new": True, "schedule_enabled": False, "trigger_url": "",
+        },
+        "configFields": [
+            {"key": "channel_name", "label": "频道名称", "type": "text", "placeholder": "YouTube 博主名称"},
+            {"key": "channel_url", "label": "频道 URL", "type": "text", "placeholder": "https://www.youtube.com/@...", "colSpan": "full"},
+            {"key": "schedule_enabled", "label": "启用自动检查", "type": "checkbox", "colSpan": "half"},
+            {"key": "poll_interval_minutes", "label": "检查间隔（分钟）", "type": "number", "min": 5, "max": 1440, "step": 5, "colSpan": "half"},
+            {"key": "only_new", "label": "只处理新视频", "type": "checkbox"},
+        ],
+    },
+    {
         "id": "platform_download",
         "name": "平台视频下载",
         "execution_domain": "process",
@@ -1992,6 +2019,7 @@ BUILTIN_NODE_TYPES = [
             "custom_prompt_enabled": False,
             "custom_prompt": "",
             "output_prefix": "img",
+            "technical_infographic": True,
         },
         "configFields": [
             {"key": "mode", "label": "生图模式", "type": "chips", "singleSelect": True,

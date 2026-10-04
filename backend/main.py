@@ -485,6 +485,10 @@ async def startup_event():
     start_queue_drainer()
     print("WS queue drainer started")
 
+    from backend.services.youtube_watch_scheduler import start_youtube_watch_scheduler
+    start_youtube_watch_scheduler()
+    print("YouTube channel watcher started")
+
     from backend.api.voiceforge_ws import start_project_drainer
     start_project_drainer()
     print("VoiceForge project progress drainer started")
@@ -510,6 +514,8 @@ async def startup_event():
 
 @app.on_event("shutdown")
 async def shutdown_event():
+    from backend.services.youtube_watch_scheduler import stop_youtube_watch_scheduler
+    stop_youtube_watch_scheduler()
     from backend.pi_rpc import get_pi_manager
     await get_pi_manager().close_all()
 
