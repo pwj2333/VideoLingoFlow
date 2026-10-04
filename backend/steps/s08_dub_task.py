@@ -2,6 +2,7 @@
 import json
 import logging
 import os
+import re
 from typing import Callable, Dict, List, Optional, Tuple
 
 from backend.config.config_manager import config
@@ -19,6 +20,30 @@ class S08DubTask(BaseStep):
     # ratio 取 2.0：后续 s09 调速步骤(max=1.5)可消化约一半余量，故此处仅在预测明显超长时才改文案
     SPEED_REDUCE_RATIO = 2.0
     SPEED_REDUCE_MIN_MARGIN = 0.5
+
+    @staticmethod
+    def _clean_spoken_text(value: object) -> str:
+        """Remove machine metadata that must never be sent to TTS or subtitles."""
+        text = str(value or "").replace("\r", " ").replace("\n", " ")
+        text = re.sub(r"\s+", " ", text).strip()
+        # Task/workspace IDs sometimes leak in as ``<id>/text`` or ``<id> text``.
+        text = re.sub(r"^\s*/app/[^\s]+/([0-9a-f]{16,})[/\\]+", "", text, flags=re.IGNORECASE)
+        text = re.sub(r"^\s*.*control_plane_workspaces[/\\][0-9a-f]{16,}[/\\]+", "", text, flags=re.IGNORECASE)
+        text = re.sub(r"^\s*[0-9a-f]{16,}(?:[/\\:：\s]+)", "", text, flags=re.IGNORECASE)
+        text = re.sub(r"^\s*(?:task[_ -]?id|任务[_ -]?id)\s*[:：=]\s*[^\s/]+\s*[/：:]?\s*", "", text, flags=re.IGNORECASE)
+        # Drop editorial numbering, while preserving meaningful numbers inside a sentence.
+        text = re.sub(r"^\s*(?:第\s*\d+\s*[章节段条]\s*|\d{1,3}\s*[.)、:：]\s+)+", "", text)
+        # Normalize paths and UUID-like task ids anywhere in the input, not only at the start.
+        text = re.sub(
+            r"(?:^|\s)(?:/app/[^\s]+/|[^\s]*control_plane_workspaces[/\\])?[0-9a-f]{16,}(?:[/\\:]|(?=\s|$))",
+            " ", text, flags=re.IGNORECASE,
+        )
+        # Remove editorial labels at the beginning while preserving meaningful numbers in prose.
+        text = re.sub(
+            r"^\s*(?:(?:\u7b2c\s*\d+\s*[\u7ae0\u8282\u6bb5\u6761])|(?:\u6bb5\u843d?\s*\d+)|(?:\d{1,3}\s*[.)\u3002\u3001\uff0c:\-]))\s*",
+            "", text, flags=re.IGNORECASE,
+        )
+        return text.strip()
 
     @property
     def artifacts(self):
@@ -329,8 +354,8 @@ class S08DubTask(BaseStep):
 
         segments = []
         for index, entry in enumerate(entries):
-            original_text = entry.get("text", "")
-            read_text = entry.get("translated") or original_text
+            original_text = cls._clean_spoken_text(entry.get("text", ""))
+            read_text = cls._clean_spoken_text(entry.get("translated") or original_text)
             has_ts = entry.get("start") is not None and entry.get("end") is not None
 
             raw_gap = 0.0
@@ -828,6 +853,11 @@ class S08DubTask(BaseStep):
                 logger.warning(f"[DubTask] 语速预测缩减异常（不中断任务）: {e}")
                 import traceback
                 traceback.print_exc()
+
+        # LLM enhancement must not reintroduce numbering or task metadata.
+        for segment in segments:
+            segment["text"] = self._clean_spoken_text(segment.get("text"))
+            segment["read_text"] = self._clean_spoken_text(segment.get("read_text"))
 
         self._write_csv(task_dir, segments)
 

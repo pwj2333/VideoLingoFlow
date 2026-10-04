@@ -6,8 +6,10 @@
 """
 import json
 import os
+import re
 import shutil
 import uuid
+import time
 from pathlib import Path
 from typing import Any, Callable, Optional
 
@@ -65,6 +67,36 @@ class S_TrackAddMedia(BaseStep):
             if inferred:
                 return inferred
         raise ValueError("无法确定素材类型，请在节点卡片上选择素材类型")
+
+    @staticmethod
+    def _tts_duration(task_dir: str, source_node: str) -> float | None:
+        """Resolve track_01 to the matching TTS sentence's actual WAV duration."""
+        match = re.search(r"track_(\d+)$", source_node or "")
+        if not match:
+            return None
+        index = int(match.group(1)) - 1
+        if index < 0:
+            return None
+        manifests = sorted(Path(task_dir, "cache").glob("dub_task*.json"))
+        if not manifests:
+            return None
+        try:
+            payload = json.loads(manifests[-1].read_text(encoding="utf-8"))
+            segments = payload.get("segments", [])
+            segment = next((item for item in segments if int(item.get("index", -1)) == index), None)
+            if segment is None and index < len(segments):
+                segment = segments[index]
+            if not segment:
+                return None
+            raw_path = str(segment.get("audio_file") or "")
+            audio_path = Path(raw_path) if os.path.isabs(raw_path) else Path(task_dir) / raw_path
+            if not audio_path.is_file():
+                return None
+            from backend.utils.audio_speed import get_audio_duration
+            duration = float(get_audio_duration(str(audio_path)) or 0)
+            return duration if duration > 0.05 else None
+        except (OSError, ValueError, TypeError, KeyError, IndexError):
+            return None
 
     def run(self, task_dir: str, callback: Optional[Callable] = None) -> dict:
         task_id = os.path.basename(os.path.normpath(task_dir))
@@ -166,6 +198,16 @@ class S_TrackAddMedia(BaseStep):
             duration = float(asset.duration) if asset and asset.duration else 5.0
         else:
             duration = max(self._num(config, "static_duration", 3.0), 0.1)
+            if media_type == "image" and (config.get("duration_from_tts") or re.search(r"track_\d+$", source_node)):
+                # Graph scheduling may start this node before TTS; wait briefly for its WAV.
+                # TTS and image generation run on separate queues; allow slow remote
+                # synthesis to finish before assigning the image its timeline slot.
+                for _ in range(900):
+                    duration_from_tts = self._tts_duration(task_dir, source_node)
+                    if duration_from_tts:
+                        duration = duration_from_tts
+                        break
+                    time.sleep(1)
 
         pos_x = self._num(config, "pos_x", 0.0)
         pos_y = self._num(config, "pos_y", 0.0)

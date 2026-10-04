@@ -13,6 +13,7 @@ try:
 except ImportError:
     np = None
 from backend.steps.base_step import BaseStep, find_artifact
+from backend.steps.s08_dub_task import S08DubTask
 from backend.config.config_manager import config
 from backend.utils.audio_segmenter import split_audio_by_timestamps
 from backend.utils.audio_speed import get_audio_duration as probe_audio_duration
@@ -23,6 +24,17 @@ class S09TTS(BaseStep):
     step_name = "语音合成(TTS)"
     dependencies = ["s08_dub_task"]
     artifacts = ["cache/dub_audio", "cache/dub_temp"]
+
+    @staticmethod
+    def _sanitize_segments(segments: List[Dict]) -> List[Dict]:
+        """Keep stale task ids and editorial numbering out of synthesized speech."""
+        for segment in segments:
+            if not isinstance(segment, dict):
+                continue
+            for key in ("text", "read_text", "read_tone_desc"):
+                if key in segment:
+                    segment[key] = S08DubTask._clean_spoken_text(segment.get(key))
+        return segments
 
     @staticmethod
     def _get_canonical_dub_task_path(task_dir: str) -> str:
@@ -186,7 +198,7 @@ class S09TTS(BaseStep):
         if pandas_path:
             if not os.path.isabs(pandas_path):
                 pandas_path = os.path.join(task_dir, pandas_path)
-            segments = cls._load_segments_from_csv(pandas_path)
+            segments = cls._sanitize_segments(cls._load_segments_from_csv(pandas_path))
             dub_data = {
                 "segments": segments,
                 "total_segments": len(segments),
@@ -200,7 +212,9 @@ class S09TTS(BaseStep):
         if not os.path.isabs(json_path):
             json_path = os.path.join(task_dir, json_path)
         with open(json_path, "r", encoding="utf-8") as f:
-            return json.load(f), json_path
+            dub_data = json.load(f)
+        dub_data["segments"] = cls._sanitize_segments(dub_data.get("segments", []))
+        return dub_data, json_path
 
     def _create_placeholder_audio(self, text: str, output_path: str, duration: float):
         """Create a placeholder silent WAV file using wave module."""

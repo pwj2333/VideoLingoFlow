@@ -1,9 +1,26 @@
 """s_imagegen: AI image generation node using the imagegen service layer."""
 import os
+import re
 import shutil
 from typing import Callable, Optional
 
 from backend.steps.base_step import BaseStep
+
+
+TECHNICAL_INFOGRAPHIC_STYLE = """
+Professional technical infographic and knowledge architecture diagram for an AI computing
+education video. Create a horizontal 16:9 composition in 2K resolution with a white or
+very light background, a precise modular grid, generous whitespace, and a clear visual
+hierarchy. Use rounded information cards, columns, numbered sections, thin crisp borders,
+flow arrows, connectors, and simple consistent line icons to explain one concrete idea
+from the paragraph: a system architecture, data pipeline, cause and effect, comparison,
+or step-by-step process. Use restrained low-saturation blue, green, purple, and orange
+accents. Flat vector illustration, modern SaaS documentation style, polished enterprise
+UI diagram, balanced spacing, readable at a glance, no photorealism, no dark cinematic
+background, no glossy 3D, no gradients. Do not render subtitles, long paragraphs, fake
+statistics, random letters, random digits, watermarks, logos, or decorative clutter;
+use simple icon placeholders and short generic labels because subtitles are added later.
+""".strip()
 
 
 def _read_input_as_text(value, task_dir: str = "") -> str:
@@ -72,6 +89,11 @@ class S_ImageGen(BaseStep):
         model = node_config.get("model", "")
         resolution = step_inputs.get("resolution", "") or node_config.get("resolution", "1K")
         aspect_ratio = step_inputs.get("aspect_ratio", "") or node_config.get("aspect_ratio", "1:1")
+        if re.fullmatch(r"image_\d+", str(node_id)):
+            if str(resolution).strip() in {"", "1K"}:
+                resolution = "2K"
+            if str(aspect_ratio).strip() in {"", "1:1"}:
+                aspect_ratio = "16:9"
         num_images = int(node_config.get("num_images", 1))
         custom_prompt_enabled = node_config.get("custom_prompt_enabled", False)
         custom_prompt = node_config.get("custom_prompt", "")
@@ -89,6 +111,9 @@ class S_ImageGen(BaseStep):
 
         if not prompt:
             raise ValueError("Prompt is empty. Please connect a text input or enable custom prompt.")
+
+        if node_config.get("technical_infographic") or re.fullmatch(r"image_\d+", str(node_id)):
+            prompt = f"{TECHNICAL_INFOGRAPHIC_STYLE}\n\nSpecific paragraph concept:\n{prompt}"
 
         # --- 3. Resolve image input for img2img ---
         ref_images = []

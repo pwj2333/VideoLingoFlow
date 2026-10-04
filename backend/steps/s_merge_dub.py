@@ -6,9 +6,11 @@
 """
 import os
 import json
+import re
 from typing import Callable, Optional, List, Dict
 
 from backend.steps.base_step import BaseStep, find_artifact
+from backend.steps.s08_dub_task import S08DubTask
 from backend.config.config_manager import config
 from backend.utils.audio_segmenter import get_audio_output_settings
 
@@ -28,6 +30,52 @@ class S_MergeDub(BaseStep):
     step_id = "merge_dub"
     step_name = "配音拼接"
     dependencies = ["s09_tts"]
+
+    @staticmethod
+    def _wrap_subtitle_text(value: object, max_cjk: int = 22, max_latin: int = 42) -> str:
+        """Keep each sentence readable in a 1920x1080 subtitle box."""
+        text = re.sub(r"\s+", " ", str(value or "").replace("\r", " ").replace("\n", " ")).strip()
+        if not text:
+            return ""
+        # Existing line breaks remain intentional, but long lines are split at a word boundary.
+        chunks = []
+        for paragraph in text.split(" "):
+            if not paragraph:
+                continue
+            limit = max_cjk if re.search(r"[\u3400-\u9fff]", paragraph) else max_latin
+            while len(paragraph) > limit:
+                chunks.append(paragraph[:limit])
+                paragraph = paragraph[limit:]
+            if paragraph:
+                chunks.append(paragraph)
+        lines = []
+        current = ""
+        for chunk in chunks:
+            limit = max_cjk if re.search(r"[\u3400-\u9fff]", chunk) else max_latin
+            separator = "" if not current or re.search(r"[\u3400-\u9fff]", current + chunk) else " "
+            if current and len(current) + len(separator) + len(chunk) > limit:
+                lines.append(current)
+                current = chunk
+            else:
+                current += separator + chunk
+        if current:
+            lines.append(current)
+        return "\\N".join(lines)
+
+    @staticmethod
+    def _split_subtitle_sentences(value: object) -> List[str]:
+        """Split a paragraph into readable subtitle events without splitting decimals."""
+        text = str(value or "").replace("\\N", " ").replace("\r", " ").replace("\n", " ")
+        text = re.sub(r"\s+", " ", text).strip()
+        if not text:
+            return []
+        # Chinese punctuation is authoritative; a Latin full stop only splits before
+        # whitespace or CJK text, so model versions such as 5.5 stay intact.
+        parts = re.split(
+            r"(?<=[。！？；!?;])\s*|(?<=[.!?])(?=\s+|[\u3400-\u9fff])",
+            text,
+        )
+        return [part.strip() for part in parts if part.strip()]
 
     # 支持拼接的音频扩展名
     AUDIO_EXTS = {".wav", ".mp3", ".flac", ".ogg", ".aac", ".m4a", ".wma", ".amr", ".opus"}
@@ -138,9 +186,10 @@ class S_MergeDub(BaseStep):
         audio_format_override = (node_config.get("audio_format") or "").strip()
         audio_bitrate_override = node_config.get("audio_bitrate")
         try:
-            silence_interval = float(node_config.get("silence_interval", 0.5) or 0.5)
+            raw_silence_interval = node_config.get("silence_interval", 0.0)
+            silence_interval = 0.0 if raw_silence_interval in (None, "") else float(raw_silence_interval)
         except (TypeError, ValueError):
-            silence_interval = 0.5
+            silence_interval = 0.0
         silence_interval = max(0.0, min(10.0, silence_interval))
 
         segments, manifest_path, source_mode = self._resolve_segments(task_dir, step_inputs)
@@ -156,7 +205,7 @@ class S_MergeDub(BaseStep):
         # 逐段顺序拼接，片段间插入静音
         if callback:
             callback(30, "逐段拼接配音音频...")
-        merged_path, dub_srt_path, timings = self._merge_sequential(
+        merged_path, dub_srt_path, timings, timed_segments = self._merge_sequential(
             segments, task_dir,
             audio_format_override=audio_format_override,
             audio_bitrate_override=audio_bitrate_override,
@@ -173,11 +222,11 @@ class S_MergeDub(BaseStep):
             output_dir = os.path.join(task_dir, "output")
             os.makedirs(output_dir, exist_ok=True)
             dub_srt_path = os.path.join(output_dir, "dub_merge.srt")
-        self._write_srt(segments, dub_srt_path, timings)
+        self._write_srt(timed_segments, dub_srt_path, timings)
 
         # 回写任务单（补充合并后的实际时间戳），仅 JSON 来源时回写
         if manifest_path:
-            for seg, (start, end) in zip(segments, timings):
+            for seg, (start, end) in zip(timed_segments, timings):
                 seg["new_start"] = round(start, 4)
                 seg["new_end"] = round(end, 4)
             with open(manifest_path, "w", encoding="utf-8") as f:
@@ -218,7 +267,7 @@ class S_MergeDub(BaseStep):
 
         if np is None:
             print("[S_MergeDub] 警告: numpy 未安装，无法拼接音频")
-            return None, None, []
+            return None, None, [], []
 
         output_settings = get_audio_output_settings()
         target_sr = int(output_settings.get("sample_rate", 48000))
@@ -231,6 +280,7 @@ class S_MergeDub(BaseStep):
         audio_format = (audio_format_override or output_settings["format"]).strip().lower() or "wav"
         merged_data = np.array([], dtype=np.float32)
         timings: List[tuple] = []
+        timed_segments: List[Dict] = []
         skipped = 0
         total = len(segments)
 
@@ -256,16 +306,18 @@ class S_MergeDub(BaseStep):
             if seg_sr != target_sr:
                 seg_data = resample_audio(seg_data, seg_sr, target_sr)
 
-            start = len(merged_data) / target_sr
             # 片段之间插入静音
-            if i > 0 and silence_interval > 0:
+            if timed_segments and silence_interval > 0:
                 silence_samples = int(round(silence_interval * target_sr))
                 merged_data = np.concatenate([
                     merged_data, np.zeros(silence_samples, dtype=np.float32)
                 ])
+            # The subtitle/image timing starts after the inserted gap.
+            start = len(merged_data) / target_sr
             merged_data = np.concatenate([merged_data, seg_data])
             end = len(merged_data) / target_sr
             timings.append((round(start, 4), round(end, 4)))
+            timed_segments.append(seg)
 
             if callback and ((i + 1) % 20 == 0 or (i + 1) == total):
                 pct = 30 + int((i + 1) / max(total, 1) * 50)
@@ -273,7 +325,7 @@ class S_MergeDub(BaseStep):
 
         if merged_data.size == 0:
             print("[S_MergeDub] 没有任何有效音频片段，拼接失败")
-            return None, None, []
+            return None, None, [], []
 
         # 峰值保护
         peak = float(np.max(np.abs(merged_data)))
@@ -312,7 +364,7 @@ class S_MergeDub(BaseStep):
         dub_srt_path = os.path.join(output_dir, f"dub_merge{node_suffix}.srt")
         print(f"  - 已导出合并音频: {output_path}")
         print(f"  - 跳过 {skipped} 段无效音频")
-        return output_path, dub_srt_path, timings
+        return output_path, dub_srt_path, timings, timed_segments
 
     # ─────────────────── 字幕生成 ───────────────────
 
@@ -321,15 +373,34 @@ class S_MergeDub(BaseStep):
         """生成与合并音频对齐的配音字幕（顺序时间戳）。"""
         lines = []
         count = 0
-        for i, (seg, (start, end)) in enumerate(zip(segments, timings), 1):
-            text = seg.get("read_text") or seg.get("text", "")
+        for seg, (start, end) in zip(segments, timings):
             if end <= start:
                 end = start + 0.1
-            lines.append(str(i))
-            lines.append(f"{S_MergeDub._format_srt_time(start)} --> {S_MergeDub._format_srt_time(end)}")
-            lines.append(text)
-            lines.append("")
-            count += 1
+            spoken_text = S08DubTask._clean_spoken_text(
+                seg.get("read_text") or seg.get("text", "")
+            )
+            sentences = S_MergeDub._split_subtitle_sentences(spoken_text) or [""]
+            weights = [max(len(re.sub(r"\s+", "", sentence)), 1) for sentence in sentences]
+            total_weight = sum(weights)
+            cursor = float(start)
+            for sentence_index, (sentence, weight) in enumerate(zip(sentences, weights)):
+                sentence_start = cursor
+                sentence_end = (
+                    float(end)
+                    if sentence_index == len(sentences) - 1
+                    else float(start) + (float(end) - float(start)) * (
+                        sum(weights[: sentence_index + 1]) / total_weight
+                    )
+                )
+                lines.append(str(count + 1))
+                lines.append(
+                    f"{S_MergeDub._format_srt_time(sentence_start)} --> "
+                    f"{S_MergeDub._format_srt_time(sentence_end)}"
+                )
+                lines.append(S_MergeDub._wrap_subtitle_text(sentence))
+                lines.append("")
+                count += 1
+                cursor = sentence_end
         with open(output_path, "w", encoding="utf-8") as f:
             f.write("\n".join(lines))
         print(f"  - 配音字幕已生成: {output_path}，共 {count} 条")
