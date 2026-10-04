@@ -1,10 +1,10 @@
 {
   "primary": {
     "fontName": "WenQuanYi Zen Hei",
-    "fontSize": 44,
+    "fontSize": 38,
     "primaryColour": "&H00FFFFFF",
     "secondaryColour": "&H00FFFFFF",
-    "outlineColour": "&H90000000",
+    "outlineColour": "&HA0101724",
     "backColour": "&H00000000",
     "bold": true,
     "italic": false,
@@ -15,12 +15,12 @@
     "spacing": 0.5,
     "angle": 0.0,
     "borderStyle": 1,
-    "outline": 2.5,
-    "shadow": 1.5,
+    "outline": 2.0,
+    "shadow": 0.8,
     "alignment": 2,
-    "marginL": 160,
-    "marginR": 160,
-    "marginV": 72,
+    "marginL": 220,
+    "marginR": 220,
+    "marginV": 58,
     "encoding": 1
   },
   "dualSubtitleEnabled": false

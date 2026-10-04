@@ -26,6 +26,12 @@ class S08DubTask(BaseStep):
         """Remove machine metadata that must never be sent to TTS or subtitles."""
         text = str(value or "").replace("\r", " ").replace("\n", " ")
         text = re.sub(r"\s+", " ", text).strip()
+        # Strip UUIDs in both compact and hyphenated forms before TTS.
+        text = re.sub(
+            r"(?<![A-Za-z0-9])(?:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|[0-9a-f]{24,})(?![A-Za-z0-9])",
+            " ", text, flags=re.IGNORECASE,
+        )
+        text = re.sub(r"^\s*[/\\:]+", "", text)
         # Task/workspace IDs sometimes leak in as ``<id>/text`` or ``<id> text``.
         text = re.sub(r"^\s*/app/[^\s]+/([0-9a-f]{16,})[/\\]+", "", text, flags=re.IGNORECASE)
         text = re.sub(r"^\s*.*control_plane_workspaces[/\\][0-9a-f]{16,}[/\\]+", "", text, flags=re.IGNORECASE)
@@ -40,9 +46,10 @@ class S08DubTask(BaseStep):
         )
         # Remove editorial labels at the beginning while preserving meaningful numbers in prose.
         text = re.sub(
-            r"^\s*(?:(?:\u7b2c\s*\d+\s*[\u7ae0\u8282\u6bb5\u6761])|(?:\u6bb5\u843d?\s*\d+)|(?:\d{1,3}\s*[.)\u3002\u3001\uff0c:\-]))\s*",
+            r"^\s*(?:(?:\u7b2c\s*\d+\s*[\u7ae0\u8282\u6bb5\u6761])|(?:\u6bb5\u843d?\s*\d+)|(?:[\[(（]\s*\d{1,3}\s*[\])）])|(?:\d{1,3}\s*[.)\u3002\u3001\uff0c:\-]))\s*",
             "", text, flags=re.IGNORECASE,
         )
+        text = re.sub(r"^\s*[:：]\s*", "", text)
         return text.strip()
 
     @property

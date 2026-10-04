@@ -37,27 +37,39 @@ class S_MergeDub(BaseStep):
         text = re.sub(r"\s+", " ", str(value or "").replace("\r", " ").replace("\n", " ")).strip()
         if not text:
             return ""
-        # Existing line breaks remain intentional, but long lines are split at a word boundary.
-        chunks = []
-        for paragraph in text.split(" "):
-            if not paragraph:
-                continue
-            limit = max_cjk if re.search(r"[\u3400-\u9fff]", paragraph) else max_latin
-            while len(paragraph) > limit:
-                chunks.append(paragraph[:limit])
-                paragraph = paragraph[limit:]
-            if paragraph:
-                chunks.append(paragraph)
-        lines = []
+        # Keep Latin/number runs intact so model names never break mid-word.
+        tokens = re.findall(r"[\u3400-\u9fff]|[A-Za-z0-9][A-Za-z0-9._%/+:-]*|[^\s]", text)
+
+        def is_cjk(token: str) -> bool:
+            return bool(re.search(r"[\u3400-\u9fff]", token))
+
+        def width(token: str) -> float:
+            return sum(1.0 if is_cjk(char) else 0.56 for char in token)
+
+        lines: List[str] = []
         current = ""
-        for chunk in chunks:
-            limit = max_cjk if re.search(r"[\u3400-\u9fff]", chunk) else max_latin
-            separator = "" if not current or re.search(r"[\u3400-\u9fff]", current + chunk) else " "
-            if current and len(current) + len(separator) + len(chunk) > limit:
+        current_width = 0.0
+        trailing_punctuation = "，。！？；：、,.!?;:)]}）】》”’"
+        for token in tokens:
+            token_width = width(token)
+            limit = max_cjk if (is_cjk(current) or is_cjk(token)) else max_latin
+            needs_space = bool(current) and not is_cjk(current[-1]) and not is_cjk(token[0])
+            extra = 0.56 if needs_space else 0.0
+            if current and token in trailing_punctuation and current_width + extra + token_width > limit:
+                # Avoid a dangling comma/full stop at the start of a line.
+                current += token
+                current_width += token_width
+                continue
+            if current and current_width + extra + token_width > limit:
                 lines.append(current)
-                current = chunk
-            else:
-                current += separator + chunk
+                current = token
+                current_width = token_width
+                continue
+            if needs_space:
+                current += " "
+                current_width += extra
+            current += token
+            current_width += token_width
         if current:
             lines.append(current)
         return "\\N".join(lines)

@@ -8,7 +8,7 @@ from pathlib import Path
 
 
 def patch(path: Path) -> None:
-    data = json.loads(path.read_text(encoding="utf-8"))
+    data = json.loads(path.read_text(encoding="utf-8-sig"))
     backup = path.with_suffix(path.suffix + ".bak-before-science-redesign")
     if not backup.exists():
         shutil.copy2(path, backup)
@@ -67,6 +67,28 @@ def patch(path: Path) -> None:
             })
         elif node_type == "output":
             config["fileName"] = "AI科普视频"
+    # The subtitle burner re-encodes the video, so pass the merged TTS WAV
+    # explicitly to preserve narration in the final MP4.
+    edges = data.setdefault("edges", [])
+    added_audio_edge = False
+    if not any(
+        edge.get("source") == "dub_merge"
+        and edge.get("target") == "burn"
+        and edge.get("targetHandle") == "in-dub"
+        for edge in edges
+    ):
+        edges.append({
+            "id": "e_dub_merge_audio_burn_dub",
+            "source": "dub_merge",
+            "target": "burn",
+            "sourceHandle": "out-audio",
+            "targetHandle": "in-dub",
+            "type": "smoothstep",
+            "style": {"stroke": "#10b981", "strokeDasharray": "6 3"},
+        })
+        added_audio_edge = True
+    if added_audio_edge:
+        data["revision"] = int(data.get("revision", 0) or 0) + 1
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
