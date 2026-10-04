@@ -2,6 +2,9 @@
 Uses pysubs2 library for SRT reading and ASS file generation.
 """
 import math
+import copy
+import re
+import unicodedata
 import pysubs2
 
 
@@ -170,6 +173,7 @@ def srt_to_ass(
     output_ass_path: str,
     play_res_x: int = 1920,
     play_res_y: int = 1080,
+    max_lines: int = 0,
 ) -> str:
     """将 SRT 文件转换为 ASS 文件，使用指定的样式参数。
 
@@ -193,6 +197,41 @@ def srt_to_ass(
     # 确保所有对话行使用 "Default" 样式
     for event in subs.events:
         event.style = "Default"
+
+    if max_lines:
+        if max_lines not in (1, 2):
+            raise ValueError("max_lines must be 1 or 2")
+        # ponytail: conservative glyph widths; upgrade to font metrics if custom
+        # fonts need tighter packing. q2 prevents libass from adding a third row.
+        available = play_res_x - default_style.marginl - default_style.marginr
+        glyph_size = float(default_style.fontsize) * float(default_style.scalex) / 100
+        capacity = max(1, int(available / max(glyph_size + default_style.spacing, 1) * 0.8))
+        split_events = []
+        for event in subs.events:
+            rows = []
+            for source_row in re.split(r"\\[Nn]|\r?\n", event.text):
+                row, width = "", 0
+                for char in re.sub(r"\{[^}]*\}", "", source_row):
+                    units = 0 if unicodedata.combining(char) else (1 if unicodedata.east_asian_width(char) in "WF" else 0.65)
+                    if row and width + units > capacity:
+                        rows.append(row)
+                        row, width = "", 0
+                    row += char
+                    width += units
+                if row:
+                    rows.append(row)
+            chunks = [r"\N".join(rows[i:i + max_lines]) for i in range(0, len(rows), max_lines)] or [""]
+            weights = [max(1, len(chunk.replace(r"\N", ""))) for chunk in chunks]
+            cursor, cumulative = event.start, 0
+            for index, (chunk, weight) in enumerate(zip(chunks, weights)):
+                cumulative += weight
+                end = event.end if index == len(chunks) - 1 else event.start + round((event.end - event.start) * cumulative / sum(weights))
+                part = copy.copy(event)
+                part.start, part.end, part.text = cursor, end, r"{\q2}" + chunk
+                split_events.append(part)
+                cursor = end
+        subs.events = split_events
+        subs.info["WrapStyle"] = "2"
 
     # 设置播放分辨率
     subs.info["PlayResX"] = str(play_res_x)

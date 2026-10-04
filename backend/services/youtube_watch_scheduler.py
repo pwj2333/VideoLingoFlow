@@ -34,30 +34,45 @@ def _scan_once() -> None:
                 workflow = json.load(fh)
         except (OSError, ValueError):
             continue
+        if workflow.get("type") == "task":
+            continue
         nodes = workflow.get("nodes") or []
         watchers = [n for n in nodes if (n.get("data") or {}).get("nodeType") == "youtube_channel_watch"]
         for watcher in watchers:
             config = (watcher.get("data") or {}).get("config") or {}
-            if not config.get("schedule_enabled"):
+            if config.get("schedule_enabled") is not True or (watcher.get("data") or {}).get("disabled"):
                 continue
             channel = str(config.get("channel_url") or config.get("channel_name") or "").strip()
             if not channel:
                 continue
-            interval = max(5, int(config.get("poll_interval_minutes", 30) or 30)) * 60
-            watch_key = f"{filename}:{channel}"
-            now = time.monotonic()
-            if now - _last_checked.get(watch_key, 0) < interval:
-                continue
-            _last_checked[watch_key] = now
             try:
+                from backend.steps.s_youtube_channel_watch import _safe_key, _state_root, _save_state
+                interval = max(5, int(config.get("poll_interval_minutes", 30) or 30)) * 60
+                watch_key = f"{filename}:{watcher['id']}:{channel}"
+                state_path = os.path.join(_state_root(), f"schedule-{_safe_key(watch_key)}.json")
+                previous = {}
+                if os.path.exists(state_path):
+                    with open(state_path, encoding="utf-8") as fh:
+                        previous = json.load(fh)
+                now = time.time()
+                if now - max(previous.get("checked_at", 0), _last_checked.get(watch_key, 0)) < interval:
+                    continue
+                _last_checked[watch_key] = now
                 item = _latest(channel)
+                state = {"video_id": item["video_id"], "checked_at": now}
+                # ponytail: one API scheduler; persisted state and submission
+                # idempotency cover restarts. Multiple APIs need a DB lease.
+                if item["video_id"] == previous.get("video_id") or (not previous and config.get("only_new", True)):
+                    _save_state(state_path, state)
+                    continue
                 state_key = f"youtube:{os.path.splitext(filename)[0]}:{item['video_id']}"
                 triggered = copy.deepcopy(workflow)
                 for node in triggered.get("nodes", []):
-                    if (node.get("data") or {}).get("nodeType") == "youtube_channel_watch":
+                    if node.get("id") == watcher["id"]:
                         node.setdefault("data", {}).setdefault("config", {})["trigger_url"] = item["url"]
                         node["data"]["config"]["only_new"] = False
                 submit_workflow(triggered, {"url": item["url"]}, mode="new", idempotency_scope=state_key)
+                _save_state(state_path, state)
                 print(f"[YouTubeWatch] submitted {item['video_id']} for {filename}", flush=True)
             except Exception as exc:
                 # A channel may be private/rate limited; retry on the next poll.

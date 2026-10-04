@@ -140,6 +140,7 @@ def package_subtitles_to_ass(
     secondary_style: Optional[dict[str, Any]] = None,
     primary_on_top: bool = False,
     force_bilingual: bool | None = None,
+    max_lines: int = 0,
 ) -> dict[str, Any]:
     """Package SRT subtitle input(s) into an ASS file with resolved styles.
 
@@ -194,6 +195,7 @@ def package_subtitles_to_ass(
             srt_path=primary_srt_path,
             style_params=resolved_primary_style,
             output_ass_path=output_ass_path,
+            max_lines=max_lines,
         )
         mode = "single"
 

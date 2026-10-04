@@ -2,8 +2,11 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import os
 import re
+import tempfile
+from urllib.parse import urlsplit, urlunsplit
 from typing import Callable, Optional
 
 from backend.steps.base_step import BaseStep
@@ -14,7 +17,21 @@ def _state_root() -> str:
 
 
 def _safe_key(value: str) -> str:
-    return re.sub(r"[^a-zA-Z0-9_.-]+", "_", value).strip("._")[:120] or "channel"
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+
+def _save_state(path: str, state: dict) -> None:
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    fd, temporary = tempfile.mkstemp(dir=os.path.dirname(path), suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            json.dump(state, fh, ensure_ascii=False)
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.replace(temporary, path)
+    finally:
+        if os.path.exists(temporary):
+            os.unlink(temporary)
 
 
 class S_YoutubeChannelWatch(BaseStep):
@@ -34,8 +51,17 @@ class S_YoutubeChannelWatch(BaseStep):
 
         url = channel.strip()
         if not url.startswith("http"):
-            url = f"https://www.youtube.com/@{url}/videos"
-        options = {"quiet": True, "skip_download": True, "extract_flat": True, "playlistend": 1}
+            url = f"https://www.youtube.com/@{url.lstrip('@')}/videos"
+        parts = urlsplit(url)
+        if parts.scheme not in ("http", "https") or parts.hostname not in ("youtube.com", "www.youtube.com", "m.youtube.com"):
+            raise ValueError("请使用 YouTube 频道 URL 或 @用户名")
+        path = parts.path.rstrip("/")
+        if re.fullmatch(r"/(?:@[^/]+|(?:channel|c|user)/[^/]+)", path):
+            path += "/videos"
+        if not path.endswith("/videos"):
+            raise ValueError("请使用 YouTube 频道的视频列表地址")
+        url = urlunsplit((parts.scheme, parts.netloc, path, "", ""))
+        options = {"quiet": True, "skip_download": True, "extract_flat": True, "playlistend": 1, "socket_timeout": 20, "retries": 2}
         with YoutubeDL(options) as ydl:
             info = ydl.extract_info(url, download=False)
         entries = [item for item in (info.get("entries") or []) if item]
@@ -53,13 +79,15 @@ class S_YoutubeChannelWatch(BaseStep):
 
     def run(self, task_dir: str, callback: Optional[Callable] = None) -> dict:
         config = getattr(self, "_node_config", {}) or {}
+        step_inputs = getattr(self, "_step_inputs", {}) or {}
         channel = str(config.get("channel_url") or config.get("channel_name") or "").strip()
         trigger_url = str(config.get("trigger_url") or "").strip()
-        if not channel and not trigger_url:
+        manual_url = str(step_inputs.get("url") or "").strip()
+        if not channel and not trigger_url and not manual_url:
             raise ValueError("请填写 YouTube 频道名称或频道 URL")
         if callback:
             callback(10, "检查 YouTube 频道最新视频...")
-        item = {"url": trigger_url, "video_id": "", "title": ""} if trigger_url else self._latest(channel)
+        item = {"url": trigger_url or manual_url, "video_id": "", "title": ""} if (trigger_url or manual_url) else self._latest(channel)
         if trigger_url:
             match = re.search(r"[?&]v=([^&]+)|youtu\.be/([^/?]+)", trigger_url)
             item["video_id"] = next((part for part in match.groups() if part), "") if match else trigger_url
@@ -75,8 +103,7 @@ class S_YoutubeChannelWatch(BaseStep):
         is_new = item["video_id"] != previous.get("video_id") if item["video_id"] else True
         if config.get("only_new", True) and not is_new and not trigger_url:
             raise ValueError("频道没有新视频")
-        with open(state_path, "w", encoding="utf-8") as fh:
-            json.dump({**item, "channel": channel}, fh, ensure_ascii=False, indent=2)
+        _save_state(state_path, {**item, "channel": channel})
         if callback:
             callback(100, f"发现视频：{item['title'] or item['video_id']}")
         return {"artifacts": [], "outputs": {"url": item["url"], "video_id": item["video_id"], "title": item["title"], "is_new": str(is_new).lower()}}

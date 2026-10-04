@@ -205,6 +205,8 @@ class S07MergeSubVideo(BaseStep):
             output_ass_path=ass_path,
             preset_id=preset_id,
             primary_on_top=primary_on_top,
+            force_bilingual=False if preset_id == "ai_science_clean" else None,
+            max_lines=2 if preset_id == "ai_science_clean" else int(self._get_config("max_lines", 0) or 0),
         )
         if callback:
             callback(32, f"字幕样式包装: {'双语' if package_result['mode'] == 'dual' else '单语'}")

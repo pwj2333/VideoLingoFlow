@@ -368,7 +368,7 @@ BUILTIN_NODE_TYPES = [
         "description": "定期检查频道最新视频，输出新视频 URL",
         "icon": "Radar",
         "color": "#ef4444",
-        "inputs": [],
+        "inputs": [{"id": "url", "label": "手动 URL", "type": "url", "required": False}],
         "outputs": [
             {"id": "url", "label": "新视频 URL", "type": "url"},
             {"id": "video_id", "label": "视频 ID", "type": "text"},
@@ -380,7 +380,7 @@ BUILTIN_NODE_TYPES = [
             "only_new": True, "schedule_enabled": False, "trigger_url": "",
         },
         "configFields": [
-            {"key": "channel_name", "label": "频道名称", "type": "text", "placeholder": "YouTube 博主名称"},
+            {"key": "channel_name", "label": "频道用户名", "type": "text", "placeholder": "YouTube @用户名（也可填写下方频道 URL）"},
             {"key": "channel_url", "label": "频道 URL", "type": "text", "placeholder": "https://www.youtube.com/@...", "colSpan": "full"},
             {"key": "schedule_enabled", "label": "启用自动检查", "type": "checkbox", "colSpan": "half"},
             {"key": "poll_interval_minutes", "label": "检查间隔（分钟）", "type": "number", "min": 5, "max": 1440, "step": 5, "colSpan": "half"},

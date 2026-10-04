@@ -403,14 +403,14 @@ class S_MergeDub(BaseStep):
                     for index in range(0, len(wrapped_lines), 2)
                 )
             display_chunks = display_chunks or [""]
-            weights = [max(len(re.sub(r"\\s+", "", chunk.replace("\\N", ""))), 1) for chunk in display_chunks]
+            weights = [max(len(re.sub(r"\s+", "", chunk.replace("\\N", ""))), 1) for chunk in display_chunks]
             total_weight = sum(weights)
             cursor = float(start)
             for sentence_index, (sentence, weight) in enumerate(zip(display_chunks, weights)):
                 sentence_start = cursor
                 sentence_end = (
                     float(end)
-                    if sentence_index == len(sentences) - 1
+                    if sentence_index == len(display_chunks) - 1
                     else float(start) + (float(end) - float(start)) * (
                         sum(weights[: sentence_index + 1]) / total_weight
                     )
