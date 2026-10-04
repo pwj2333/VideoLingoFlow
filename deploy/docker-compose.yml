@@ -118,6 +118,19 @@ services:
       - app-data-root:/app/data
       - app-model-cache:/app/_model_cache
       - app-temp:/app/temp
+      # Keep runtime data migration behavior updateable with the server checkout.
+      - ./runtime-init.sh:/app/runtime-init.sh:ro
+      # Keep library-level downloads/configuration outside the container layer.
+      - type: volume
+        source: app-root-cache
+        target: /root/.cache
+        volume:
+          nocopy: true
+      - type: volume
+        source: app-root-config
+        target: /root/.config
+        volume:
+          nocopy: true
     networks:
       - backend
     depends_on:
@@ -192,6 +205,17 @@ services:
       - app-data-root:/app/data
       - app-model-cache:/app/_model_cache
       - app-temp:/app/temp
+      - ./runtime-init.sh:/app/runtime-init.sh:ro
+      - type: volume
+        source: app-root-cache
+        target: /root/.cache
+        volume:
+          nocopy: true
+      - type: volume
+        source: app-root-config
+        target: /root/.config
+        volume:
+          nocopy: true
     networks:
       - backend
     depends_on:
@@ -234,10 +258,23 @@ networks:
     driver: bridge
 
 volumes:
+  # Explicit names prevent a different compose project name from creating a
+  # second empty set of volumes and making settings appear to disappear.
   postgres-data:
+    name: yunzhiai_postgres-data
   redis-data:
+    name: yunzhiai_redis-data
   minio-data:
+    name: yunzhiai_minio-data
   app-data:
+    name: yunzhiai_app-data
   app-data-root:
+    name: yunzhiai_app-data-root
   app-model-cache:
+    name: yunzhiai_app-model-cache
   app-temp:
+    name: yunzhiai_app-temp
+  app-root-cache:
+    name: yunzhiai_app-root-cache
+  app-root-config:
+    name: yunzhiai_app-root-config
