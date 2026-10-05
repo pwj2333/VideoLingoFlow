@@ -131,9 +131,13 @@ from blueprints.toutiao_bp import toutiao_bp  # noqa: E402
 app.register_blueprint(toutiao_bp)
 logger.info("[Startup] toutiao_bp registered OK")
 
-from blueprints.vivo_bp import vivo_bp  # noqa: E402
-app.register_blueprint(vivo_bp)
-logger.info("[Startup] vivo_bp registered OK")
+try:
+    from blueprints.vivo_bp import vivo_bp  # noqa: E402
+    app.register_blueprint(vivo_bp)
+    logger.info("[Startup] vivo_bp registered OK")
+except ImportError as exc:
+    # Optional platform module; keep Bilibili and other account services available.
+    logger.warning(f"[Startup] vivo_bp skipped: {exc}")
 
 from blueprints.xiaohongshu_bp import xiaohongshu_bp  # noqa: E402
 app.register_blueprint(xiaohongshu_bp)
