@@ -21,7 +21,7 @@ async def upload_workflow_video(file: UploadFile = File(...)):
     suffix = Path(file.filename or "").suffix.lower()
     if suffix not in allowed:
         raise HTTPException(400, "Unsupported video format")
-    upload_dir = Path(TASKS_ROOT) / "uploads"
+    upload_dir = Path(os.getenv("TASKS_ROOT", TASKS_ROOT)) / "uploads"
     upload_dir.mkdir(parents=True, exist_ok=True)
     target = upload_dir / f"{uuid.uuid4().hex}{suffix}"
     size = 0
