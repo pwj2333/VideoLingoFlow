@@ -67,6 +67,37 @@ services:
       timeout: 5s
       retries: 12
 
+  social-backend:
+    image: ${API_IMAGE}
+    restart: unless-stopped
+    command: ["sh", "-c", "cd /app/thirdparty/social-auto-upload-web-ui/backend && exec python app.py"]
+    environment:
+      SAU_PORT: 5409
+      SAU_DATA_DIR: /app/data/social
+    volumes:
+      - app-data-root:/app/data
+    networks:
+      - backend
+    expose:
+      - "5409"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5409/api/health', timeout=5)"]
+      interval: 15s
+      timeout: 8s
+      retries: 8
+
+  social-frontend:
+    image: ${API_IMAGE}
+    restart: unless-stopped
+    command: ["python", "/app/backend/social_frontend_server.py", "--dist", "/app/thirdparty/social-auto-upload-web-ui/frontend/dist", "--host", "0.0.0.0", "--port", "5173", "--backend-port", "5409"]
+    networks:
+      - backend
+    expose:
+      - "5173"
+    depends_on:
+      social-backend:
+        condition: service_healthy
+
   api:
     image: ${API_IMAGE}
     command: ["sh", "-c", "python /app/runtime-init.py && mkdir -p /app/data/assets && exec uvicorn backend.main:app --host 0.0.0.0 --port 11001 --proxy-headers"]
@@ -88,6 +119,7 @@ services:
       CLUSTER_MODE: "1"
       CELERY_CONTROL_PLANE_CONCURRENCY: ${CELERY_CONTROL_PLANE_CONCURRENCY:-1}
       CUTIA_UPSTREAM: http://cutia:4100
+      SOCIAL_BACKEND_URL: http://social-backend:5409
       VIDEOLINGO_REMOTE_MODE: ${VIDEOLINGO_REMOTE_MODE:-0}
       YUNZHIAI_SELF_USE: ${YUNZHIAI_SELF_USE:-1}
       YUNZHIAI_CONFIG_PATH: /app/data/config.yaml

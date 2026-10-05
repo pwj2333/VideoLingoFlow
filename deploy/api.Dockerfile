@@ -61,6 +61,7 @@ COPY --from=frontend /usr/local/bin/node /usr/local/bin/node
 
 # 复制依赖清单
 COPY backend/requirements.txt backend/requirements-voiceforge.txt /app/backend/
+COPY thirdparty/social-auto-upload-web-ui/backend/requirements.txt /tmp/social-requirements.txt
 
 # 1) 先装 PyTorch 三件套（大层，单独缓存；cu128 自带 CUDA 运行库）
 RUN if [ "$TORCH_INDEX" = "cpu" ]; then \
@@ -76,6 +77,9 @@ RUN if [ "$TORCH_INDEX" = "cpu" ]; then \
 
 # 2) 其余 Python 依赖
 RUN pip install --no-cache-dir -r /app/backend/requirements.txt
+
+# Social publishing service (Bilibili and other platform account management).
+RUN pip install --no-cache-dir -r /tmp/social-requirements.txt
 
 # 3) Playwright 浏览器（浏览器自动化 / CloakBrowser 能力）
 RUN pip install --no-cache-dir "playwright>=1.60,<2" \

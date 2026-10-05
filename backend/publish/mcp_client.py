@@ -126,7 +126,7 @@ def build_declaration_fields(platform_key: str, declaration: str) -> dict:
 class PublishClient:
     """HTTP client for the social-auto-upload backend service."""
 
-    DEFAULT_BASE_URL = "http://localhost:5409"
+    DEFAULT_BASE_URL = "http://social-backend:5409"
 
     def __init__(self, base_url: Optional[str] = None, timeout: int = 600):
         self._base_url = (base_url or os.getenv("SOCIAL_BACKEND_URL", self.DEFAULT_BASE_URL)).rstrip("/")

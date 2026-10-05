@@ -127,7 +127,7 @@ export default function SocialPublish() {
       {/* iframe 视图 */}
       <iframe
         key={iframeKey}
-        src="http://localhost:5173/social/#"
+        src="/social/#"
         className="w-full flex-1 border-none"
         title="多平台发布"
       />

@@ -393,7 +393,7 @@ async function refreshBatch(batchId) {
 
 function connectSSE() {
   closeSSE()
-  const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5409'
+  const baseUrl = import.meta.env.VITE_API_BASE_URL || '/social'
   const es = new EventSource(`${baseUrl}/api/v2/tasks/stream`)
   eventSource = es
   es.onmessage = (e) => {

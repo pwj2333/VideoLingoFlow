@@ -93,7 +93,12 @@ class SocialFrontendHandler(http.server.SimpleHTTPRequestHandler):
     # -- 后端代理 -------------------------------------------------------
 
     def _proxy(self, method: str) -> None:
-        target = self.backend_url + self.path
+        path = self.path
+        if path == "/social":
+            path = "/"
+        elif path.startswith("/social/"):
+            path = path[len("/social"):]
+        target = self.backend_url + path
         headers = {
             k: v for k, v in self.headers.items()
             if k.lower() not in ("host", "connection", "accept-encoding", "content-length")
