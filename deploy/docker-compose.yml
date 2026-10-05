@@ -89,7 +89,7 @@ services:
   social-frontend:
     image: ${API_IMAGE}
     restart: unless-stopped
-    command: ["python", "/app/backend/social_frontend_server.py", "--dist", "/app/thirdparty/social-auto-upload-web-ui/frontend/dist", "--host", "0.0.0.0", "--port", "5173", "--backend-port", "5409"]
+    command: ["python", "/app/backend/social_frontend_server.py", "--dist", "/app/thirdparty/social-auto-upload-web-ui/frontend/dist", "--host", "0.0.0.0", "--port", "5173", "--backend-host", "social-backend", "--backend-port", "5409"]
     networks:
       - backend
     expose:

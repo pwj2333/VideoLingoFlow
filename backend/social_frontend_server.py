@@ -145,6 +145,7 @@ def main() -> int:
     parser.add_argument("--dist", required=True, help="path to built frontend dist dir")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=5173)
+    parser.add_argument("--backend-host", default="127.0.0.1")
     parser.add_argument("--backend-port", type=int, default=5409, help="social backend port to proxy non-static requests to")
     args = parser.parse_args()
 
@@ -154,7 +155,7 @@ def main() -> int:
               file=sys.stderr)
         return 1
 
-    SocialFrontendHandler.backend_url = f"http://{args.host}:{args.backend_port}"
+    SocialFrontendHandler.backend_url = f"http://{args.backend_host}:{args.backend_port}"
     handler = functools.partial(SocialFrontendHandler, directory=str(dist_dir))
     with http.server.ThreadingHTTPServer((args.host, args.port), handler) as httpd:
         print(f"[SocialFrontend] static server: http://{args.host}:{args.port}/social/  (dir={dist_dir})")
