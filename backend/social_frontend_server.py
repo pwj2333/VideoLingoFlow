@@ -32,7 +32,9 @@ class SocialFrontendHandler(http.server.SimpleHTTPRequestHandler):
     def _static_path(self, raw_path: str) -> str | None:
         """返回应交给静态文件处理的 path；返回 None 表示应代理到后端。"""
         path = raw_path.split("?", 1)[0].split("#", 1)[0]
-        if path == "/social" or path.startswith("/social/"):
+        if path == "/social" or path == "/social/":
+            return path
+        if path.startswith("/social/assets/") or path.startswith("/social/@"):
             return path
         if path in ("", "/"):
             return "/index.html"
