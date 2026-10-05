@@ -234,6 +234,7 @@ CUTIA_UPSTREAM = os.environ.get(
     "CUTIA_UPSTREAM",
     f"http://127.0.0.1:{os.environ.get('CUTIA_PORT', '4100')}",
 ).rstrip("/")
+SOCIAL_FRONTEND_UPSTREAM = os.environ.get("SOCIAL_FRONTEND_UPSTREAM", "http://social-frontend:5173").rstrip("/")
 HOP_BY_HOP_HEADERS = {
     "connection", "keep-alive", "proxy-authenticate", "proxy-authorization",
     "te", "trailer", "transfer-encoding", "upgrade",
@@ -317,6 +318,39 @@ async def proxy_cutia(request: Request, path: str = ""):
     except httpx.RequestError:
         await client.aclose()
         raise HTTPException(status_code=502, detail="剪辑工作台（Cutia）服务不可用")
+
+    async def stream_response():
+        async for chunk in upstream_response.aiter_raw():
+            yield chunk
+
+    async def close_upstream():
+        await upstream_response.aclose()
+        await client.aclose()
+
+    return StreamingResponse(
+        stream_response(),
+        status_code=upstream_response.status_code,
+        headers=_proxy_headers(upstream_response.headers),
+        background=BackgroundTask(close_upstream),
+    )
+
+
+@app.api_route("/social", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"])
+@app.api_route("/social/{path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"])
+async def proxy_social_frontend(request: Request, path: str = ""):
+    upstream_url = f"{SOCIAL_FRONTEND_UPSTREAM}/social/{path}" if path else f"{SOCIAL_FRONTEND_UPSTREAM}/social/"
+    if request.url.query:
+        upstream_url = f"{upstream_url}?{request.url.query}"
+    client = httpx.AsyncClient(timeout=httpx.Timeout(connect=5.0, read=None, write=300.0, pool=5.0), trust_env=False)
+    try:
+        body = await request.body()
+        upstream_response = await client.send(
+            client.build_request(request.method, upstream_url, headers=_proxy_headers(request.headers), content=body),
+            stream=True,
+        )
+    except (httpx.RequestError, ClientDisconnect):
+        await client.aclose()
+        raise HTTPException(status_code=502, detail="多平台发布服务不可用")
 
     async def stream_response():
         async for chunk in upstream_response.aiter_raw():
