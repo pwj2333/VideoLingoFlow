@@ -97,6 +97,8 @@ services:
     depends_on:
       social-backend:
         condition: service_healthy
+    healthcheck:
+      disable: true
 
   api:
     image: ${API_IMAGE}
