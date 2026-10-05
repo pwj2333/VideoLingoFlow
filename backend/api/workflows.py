@@ -5,13 +5,42 @@ import time
 import shutil
 from pathlib import Path
 from typing import Optional, List, Any
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from pydantic import BaseModel, Field
 from backend.workflow_validation import normalize_workflow
 from backend.control_plane.security import current_user, require_permission
 TASKS_ROOT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "tasks")
 
 router = APIRouter(dependencies=[Depends(current_user)])
+
+
+@router.post("/upload-video")
+async def upload_workflow_video(file: UploadFile = File(...)):
+    """Receive a browser-selected video into persistent server task storage."""
+    allowed = {".mp4", ".avi", ".mkv", ".mov", ".wmv", ".flv", ".webm", ".m4v"}
+    suffix = Path(file.filename or "").suffix.lower()
+    if suffix not in allowed:
+        raise HTTPException(400, "Unsupported video format")
+    upload_dir = Path(TASKS_ROOT) / "uploads"
+    upload_dir.mkdir(parents=True, exist_ok=True)
+    target = upload_dir / f"{uuid.uuid4().hex}{suffix}"
+    size = 0
+    try:
+        with target.open("wb") as output:
+            while chunk := await file.read(1024 * 1024):
+                size += len(chunk)
+                if size > 2 * 1024 * 1024 * 1024:
+                    raise HTTPException(413, "Video exceeds 2 GiB upload limit")
+                output.write(chunk)
+    except Exception:
+        target.unlink(missing_ok=True)
+        raise
+    finally:
+        await file.close()
+    if not size:
+        target.unlink(missing_ok=True)
+        raise HTTPException(400, "Empty video file")
+    return {"path": str(target), "filename": Path(file.filename or target.name).name, "size": size}
 
 _BUNDLED_WORKFLOWS_DIR = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "config", "workflows"

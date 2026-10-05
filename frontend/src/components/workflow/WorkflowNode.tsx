@@ -1500,6 +1500,7 @@ function ConfigForm({ nodeType, config, onConfigChange, onVoiceSelect, onButtonA
 }) {
   const [dynamicFields, setDynamicFields] = useState<ConfigField[]>([]);
   const [dynamicLoading, setDynamicLoading] = useState(false);
+  const [videoUploading, setVideoUploading] = useState(false);
   const [expandField, setExpandField] = useState<{ key: string; label: string; value: string } | null>(null);
   const [audioSelectorOpen, setAudioSelectorOpen] = useState(false);
   const [audioSelectorField, setAudioSelectorField] = useState<{ key: string; label: string } | null>(null);
@@ -1932,6 +1933,7 @@ function ConfigForm({ nodeType, config, onConfigChange, onVoiceSelect, onButtonA
           }
 
           if (field.type === "file") {
+            const isVideoInput = nodeType.id === "input" && field.key === "videoPath";
             return (
               <div key={field.key} className={fieldSpanClass(field)}>
                 <label className="text-[11px] font-medium text-muted-foreground block mb-1">{field.label}</label>
@@ -1945,7 +1947,37 @@ function ConfigForm({ nodeType, config, onConfigChange, onVoiceSelect, onButtonA
                     onWheel={(e) => e.stopPropagation()}
                     className="flex-1 text-xs px-2.5 py-1.5 rounded-md border border-border/50 bg-background focus:border-primary/50 focus:ring-1 focus:ring-primary/20 outline-none transition-all"
                   />
-                  <button
+                  {isVideoInput && (
+                    <label className="px-2 py-1 text-[10px] rounded-md bg-primary/10 text-primary hover:bg-primary/20 border border-primary/30 transition-colors flex-shrink-0 cursor-pointer">
+                      {videoUploading ? "上传中…" : "上传视频"}
+                      <input
+                        type="file"
+                        accept={(field.fileFilter || []).map((ext: string) => `.${ext}`).join(",")}
+                        className="hidden"
+                        disabled={videoUploading}
+                        onChange={async (event) => {
+                          const file = event.target.files?.[0];
+                          event.target.value = "";
+                          if (!file) return;
+                          setVideoUploading(true);
+                          try {
+                            const form = new FormData();
+                            form.append("file", file);
+                            const response = await client.post("/api/workflows/upload-video", form, {
+                              timeout: 0,
+                              headers: { "Content-Type": "multipart/form-data" },
+                            });
+                            onConfigChange(field.key, response.data.path);
+                          } catch (error: any) {
+                            window.alert(error?.message || "视频上传失败");
+                          } finally {
+                            setVideoUploading(false);
+                          }
+                        }}
+                      />
+                    </label>
+                  )}
+                  {!isVideoInput && <button
                     onClick={async () => {
                       // Determine if this is a folder selector (outputDir, cookie_file, etc.)
                       const isFolder = field.key === "outputDir" || (field.fileFilter && field.fileFilter.length === 0);
@@ -1960,7 +1992,7 @@ function ConfigForm({ nodeType, config, onConfigChange, onVoiceSelect, onButtonA
                     className="px-2 py-1 text-[10px] rounded-md bg-primary/10 text-primary hover:bg-primary/20 border border-primary/30 transition-colors flex-shrink-0"
                   >
                     Browse
-                  </button>
+                  </button>}
                 </div>
               </div>
             );
