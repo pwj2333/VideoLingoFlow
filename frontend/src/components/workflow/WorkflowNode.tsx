@@ -1934,6 +1934,8 @@ function ConfigForm({ nodeType, config, onConfigChange, onVoiceSelect, onButtonA
 
           if (field.type === "file") {
             const isVideoInput = nodeType.id === "input" && field.key === "videoPath";
+            const isAdVideoUpload = nodeType.id === "ad_insert_by_subtitle" && field.key === "ad_video";
+            const isBrowserVideoUpload = isVideoInput || isAdVideoUpload;
             return (
               <div key={field.key} className={fieldSpanClass(field)}>
                 <label className="text-[11px] font-medium text-muted-foreground block mb-1">{field.label}</label>
@@ -1947,9 +1949,9 @@ function ConfigForm({ nodeType, config, onConfigChange, onVoiceSelect, onButtonA
                     onWheel={(e) => e.stopPropagation()}
                     className="flex-1 text-xs px-2.5 py-1.5 rounded-md border border-border/50 bg-background focus:border-primary/50 focus:ring-1 focus:ring-primary/20 outline-none transition-all"
                   />
-                  {isVideoInput && (
+                  {isBrowserVideoUpload && (
                     <label className="px-2 py-1 text-[10px] rounded-md bg-primary/10 text-primary hover:bg-primary/20 border border-primary/30 transition-colors flex-shrink-0 cursor-pointer">
-                      {videoUploading ? "上传中…" : "上传视频"}
+                      {videoUploading ? "上传中…" : isAdVideoUpload ? "上传广告" : "上传视频"}
                       <input
                         type="file"
                         accept={(field.fileFilter || []).map((ext: string) => `.${ext}`).join(",")}
@@ -1977,7 +1979,7 @@ function ConfigForm({ nodeType, config, onConfigChange, onVoiceSelect, onButtonA
                       />
                     </label>
                   )}
-                  {!isVideoInput && <button
+                  {!isBrowserVideoUpload && <button
                     onClick={async () => {
                       // Determine if this is a folder selector (outputDir, cookie_file, etc.)
                       const isFolder = field.key === "outputDir" || (field.fileFilter && field.fileFilter.length === 0);
@@ -2561,11 +2563,26 @@ function ConfigForm({ nodeType, config, onConfigChange, onVoiceSelect, onButtonA
 
 function WorkflowNodeComponent({ data, id, selected }: NodeProps) {
   const nd = data as any;
+  const { updateNodeData } = useReactFlow();
+  const artifactTaskId = useWorkflowStore((s) => s.activeTaskId || s.taskModeId);
+  const [expanded, setExpanded] = useState(true);
   const nodeType = isGroupNodeData(nd)
     ? buildInlineGroupTypeDef(nd)
     : isLoopNodeData(nd)
       ? buildInlineLoopTypeDef(nd)
       : getNodeTypeDef(nd.nodeType);
+  if (!nodeType) return null;
+  if (isGroupNodeData(nd)) {
+    return <GroupWorkflowNodeCard id={id} nd={nd} selected={!!selected} nodeType={nodeType} expanded={expanded} setExpanded={setExpanded} updateNodeData={updateNodeData} taskId={artifactTaskId} />;
+  }
+  if (isLoopNodeData(nd)) {
+    return <LoopContainerCard id={id} nd={nd} selected={!!selected} nodeType={nodeType} expanded={expanded} setExpanded={setExpanded} updateNodeData={updateNodeData} taskId={artifactTaskId} dragHandleClass={NODE_DRAG_HANDLE_CLASS} />;
+  }
+  return <WorkflowNodeContent data={data} id={id} selected={selected} nodeType={nodeType} />;
+}
+
+function WorkflowNodeContent({ data, id, selected, nodeType }: { data: NodeProps["data"]; id: string; selected?: boolean; nodeType: NonNullable<ReturnType<typeof getNodeTypeDef>> }) {
+  const nd = data as any;
   const { updateNodeData, getNodes, getEdges } = useReactFlow();
   const activeTaskId = useWorkflowStore((s) => s.activeTaskId);
   const taskModeId = useWorkflowStore((s) => s.taskModeId);
@@ -2602,37 +2619,6 @@ function WorkflowNodeComponent({ data, id, selected }: NodeProps) {
   const [sdQueryLoading, setSdQueryLoading] = useState(false);
   const [sdQueryResult, setSdQueryResult] = useState<any>(null);
   const [sdQueryError, setSdQueryError] = useState("");
-
-  if (!nodeType) return null;
-  if (isGroupNodeData(nd)) {
-    return (
-      <GroupWorkflowNodeCard
-        id={id}
-        nd={nd}
-        selected={!!selected}
-        nodeType={nodeType}
-        expanded={expanded}
-        setExpanded={setExpanded}
-        updateNodeData={updateNodeData}
-        taskId={artifactTaskId}
-      />
-    );
-  }
-  if (isLoopNodeData(nd)) {
-    return (
-      <LoopContainerCard
-        id={id}
-        nd={nd}
-        selected={!!selected}
-        nodeType={nodeType}
-        expanded={expanded}
-        setExpanded={setExpanded}
-        updateNodeData={updateNodeData}
-        taskId={artifactTaskId}
-        dragHandleClass={NODE_DRAG_HANDLE_CLASS}
-      />
-    );
-  }
 
   // Get upstream node outputs for preview nodes
   const getUpstreamOutputs = useCallback(() => {

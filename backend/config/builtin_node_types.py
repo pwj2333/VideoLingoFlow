@@ -376,11 +376,12 @@ BUILTIN_NODE_TYPES = [
             {"id": "is_new", "label": "是否新视频", "type": "text"},
         ],
         "defaultConfig": {
-            "channel_name": "", "channel_url": "", "poll_interval_minutes": 30,
+            "channel_name": "", "channel_url": "", "channels": "", "poll_interval_minutes": 30,
             "only_new": True, "schedule_enabled": False, "trigger_url": "",
         },
         "configFields": [
             {"key": "channel_name", "label": "频道用户名", "type": "text", "placeholder": "YouTube @用户名（也可填写下方频道 URL）"},
+            {"key": "channels", "label": "多个频道", "type": "textarea", "placeholder": "每行一个 YouTube @用户名或频道 URL", "description": "支持多个 UP 主；每行一个频道，留空则使用上面的单频道配置", "colSpan": "full"},
             {"key": "channel_url", "label": "频道 URL", "type": "text", "placeholder": "https://www.youtube.com/@...", "colSpan": "full"},
             {"key": "schedule_enabled", "label": "启用自动检查", "type": "checkbox", "colSpan": "half"},
             {"key": "poll_interval_minutes", "label": "检查间隔（分钟）", "type": "number", "min": 5, "max": 1440, "step": 5, "colSpan": "half"},
@@ -1691,6 +1692,30 @@ BUILTIN_NODE_TYPES = [
             {"key": "max_duration_minutes", "label": "最长时长上限(分钟)", "type": "number", "min": 0, "max": 1440,
              "colSpan": "half", "placeholder": "0 = 不限制",
              "description": "拼接总时长超过该上限时直接中止并提示，避免超长视频拖垮机器；0 表示不限制"}
+        ],
+    },
+    {
+        "id": "ad_insert_by_subtitle",
+        "name": "字幕触发广告插入",
+        "execution_domain": "thread",
+        "category": "video",
+        "description": "根据字幕文字和时间范围，把用户上传的广告视频完整插入主视频；广告会增加最终视频时长。",
+        "icon": "Clapperboard",
+        "color": "#f97316",
+        "inputs": [
+            {"id": "video", "label": "主视频", "type": "video", "required": True},
+            {"id": "subtitle", "label": "字幕", "type": "subtitle", "required": True},
+            {"id": "ad_video", "label": "广告视频", "type": "video", "required": True},
+        ],
+        "outputs": [{"id": "video", "label": "插入广告后视频", "type": "video"}],
+        "defaultConfig": {"ad_video": "", "trigger_text": "", "window_start": 0, "window_end": 0, "insert_at": "start", "max_insertions": 1},
+        "configFields": [
+            {"key": "ad_video", "label": "广告视频", "type": "file", "placeholder": "上传广告视频后自动填入服务器路径", "fileFilter": ["mp4", "avi", "mkv", "mov", "wmv", "flv", "webm", "m4v"], "colSpan": "full"},
+            {"key": "trigger_text", "label": "触发字幕文字", "type": "text", "placeholder": "留空则使用时间范围内第一条字幕", "description": "字幕包含此文字时触发；不区分大小写"},
+            {"key": "window_start", "label": "开始时间（秒）", "type": "number", "min": 0, "step": 0.1, "colSpan": "half"},
+            {"key": "window_end", "label": "结束时间（秒）", "type": "number", "min": 0, "step": 0.1, "placeholder": "0 = 不限制", "colSpan": "half"},
+            {"key": "insert_at", "label": "插入时机", "type": "select", "options": [{"value": "start", "label": "触发字幕开始"}, {"value": "end", "label": "触发字幕结束"}], "colSpan": "half"},
+            {"key": "max_insertions", "label": "最多插入次数", "type": "number", "min": 1, "max": 20, "step": 1, "colSpan": "half"},
         ],
     },
     {
